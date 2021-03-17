@@ -258,4 +258,4 @@ class LayerContainer {
       .then(() => this.render(mapboxMap, falcor))
   }
 }
-export default LayerContainer;
+export { LayerContainer };
