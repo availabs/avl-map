@@ -119,7 +119,9 @@ class LayerContainer {
   hoverLeave(mapboxMap, layerId) {
     if (!this.hoveredFeatures.has(layerId)) return;
 
+console.log(this.hoveredFeatures, layerId, this.hoveredFeatures.get(layerId))
     this.hoveredFeatures.get(layerId).forEach(value => {
+console.log(value)
       mapboxMap.setFeatureState(value, { hover: false });
     });
     this.hoveredFeatures.delete(layerId);
@@ -136,6 +138,8 @@ class LayerContainer {
       this.hoveredFeatures.set(layerId, new Map());
 
       features.forEach(({ id, source, sourceLayer }) => {
+        if ((id === undefined) || (id === null)) return;
+
         if (hoveredFeatures.has(id)) {
           this.hoveredFeatures.get(layerId).set(id, hoveredFeatures.get(id));
           hoveredFeatures.delete(id);

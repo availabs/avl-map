@@ -32,7 +32,7 @@ const DefaultMapOptions = {
   center: [-74.180647, 42.58],
   minZoom: 2,
   zoom: 10,
-  preserveDrawingBuffer: false,
+  preserveDrawingBuffer: true,
   // style: "mapbox://styles/am3081/cjqqukuqs29222sqwaabcjy29",
   styles: DefaultStyles,
   attributionControl: false,
@@ -447,6 +447,14 @@ const AvlMap = props => {
     });
   }, [state.map]);
 
+  const saveMapAsImage = React.useCallback((fileName = "map.png") => {
+    const canvas = state.map.getCanvas();
+    const a = document.createElement("a");
+    a.download = fileName;
+    a.href = canvas.toDataURL();
+    a.click();
+  }, [state.map]);
+
 // LOAD MAPBOX GL MAP
   React.useEffect(() => {
     if (!accessToken) return;
@@ -632,7 +640,8 @@ const AvlMap = props => {
     removePinnedHoverComp,
     addPinnedHoverComp,
     bringModalToFront,
-    projectLngLat
+    projectLngLat,
+    saveMapAsImage
   };
 
 // SEND PROPS TO ACTIVE LAYERS
@@ -660,9 +669,9 @@ const AvlMap = props => {
   }, [activeLayers, state.modalData]);
 
   return (
-    <MapContainer ref={ ref } className="flex-grow relative flex focus:outline-none">
+    <MapContainer ref={ ref } className="w-full h-full relative focus:outline-none">
 
-      <div id={ id } className="flex-grow"/>
+      <div id={ id } className="w-full h-full relative"/>
 
       <Sidebar { ...DefaultSidebar } { ...sidebar }
         sidebarTabIndex={ state.sidebarTabIndex }
@@ -707,27 +716,9 @@ const AvlMap = props => {
         inactiveLayers={ inactiveLayers }
         MapActions={ MapActions }/>
 
-      { !Boolean(state.hoverData.data.size) ? null :
-        <HoverCompContainer { ...hoverData } { ...size }
-          project={ projectLngLat }>
-          { HoverComps.map(({ HoverComp, data, layer }, i) => (
-              <div key={ layer.id }
-                className={ `${ i > 0 ? "mt-1" : "" } relative` }>
-                <HoverComp layer={ layer } data={ data }
-                  activeLayers={ activeLayers }
-                  layersLoading={ state.layersLoading }
-                  loadingLayers={ loadingLayers }
-                  inactiveLayers={ inactiveLayers }
-                  MapActions={ MapActions }/>
-              </div>
-            ))
-          }
-        </HoverCompContainer>
-      }
-
       <div className={ `
         absolute top-0 bottom-0 left-0 right-0 z-50
-        pointer-events-none overflow-hidden flex-grow
+        pointer-events-none overflow-hidden
       ` }>
 
         { Modals.map(({ modalData, ...data }) => (
@@ -761,6 +752,24 @@ const AvlMap = props => {
               }
             </PinnedHoverComp>
           ))
+        }
+
+        { !Boolean(state.hoverData.data.size) ? null :
+          <HoverCompContainer { ...hoverData } { ...size }
+            project={ projectLngLat }>
+            { HoverComps.map(({ HoverComp, data, layer }, i) => (
+                <div key={ layer.id }
+                  className={ `${ i > 0 ? "mt-1" : "" } relative` }>
+                  <HoverComp layer={ layer } data={ data }
+                    activeLayers={ activeLayers }
+                    layersLoading={ state.layersLoading }
+                    loadingLayers={ loadingLayers }
+                    inactiveLayers={ inactiveLayers }
+                    MapActions={ MapActions }/>
+                </div>
+              ))
+            }
+          </HoverCompContainer>
         }
 
       </div>

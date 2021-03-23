@@ -8,6 +8,8 @@ import { Icon } from "./LayerPanel"
 
 const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, ...props }) => {
 
+  const [node, setNode] = React.useState();
+
   const [legendLayer, infoBoxLayers, infoBoxWidth] = activeLayers.reduce((a, c) => {
       if (c.legend) {
         a[0] = c;
@@ -24,7 +26,8 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
   const theme = useTheme();
 
   return (
-    <div className={ `
+    <div ref={ setNode }
+      className={ `
         absolute right-0 top-0 bottom-0
         flex flex-col items-end z-30
         pointer-events-none
@@ -41,7 +44,7 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
       { !infoBoxLayers.length ? null :
         <div className={ `
             ${ theme.sidebarBg } p-1 rounded
-
+            scrollbar-sm overflow-y-auto overflow-x-visible
             pointer-events-auto
           ` }
           style={ {
@@ -57,7 +60,8 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
                     <InfoBox key={ ii } { ...props } { ...box }
                       index={ ii } layer={ layer }
                       MapActions={ MapActions }
-                      activeLayers={ activeLayers }/>
+                      activeLayers={ activeLayers }
+                      containerNode={ node }/>
                   )
                 }
               </div>
@@ -103,9 +107,12 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
         </div>
       }
       { !Component || !isOpen ? null :
-        <div className={ `${ theme.accent1 } p-1 rounded` }>
+        <div className={ `
+          ${ theme.accent1 } p-1 rounded
+        ` }>
           { typeof Component === "function" ?
-            <Component layer={ layer } MapActions={ MapActions }
+            <Component layer={ layer }
+              MapActions={ MapActions }
               { ...props }/> :
             Component
           }

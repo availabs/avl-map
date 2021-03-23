@@ -105,8 +105,6 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
         style={ style }/>
       <div className={ `${ theme.menuBg } p-1 rounded relative z-20` }>
 
-        <div className={ `${ theme.bg } rounded relative` }>
-
         <RemoveButton orientation={ orientation.current }>
           <Icon onClick={ e => remove(id) }>
             <span className="fa fa-times"/>
@@ -116,7 +114,6 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
 
           { children }
 
-        </div>
       </div>
     </div>
   )
@@ -141,11 +138,9 @@ export const HoverCompContainer = ({ show, children, lngLat, project, ...rest })
         // transition: "transform 0.15s ease-out"
       } }>
       <div className={ `${ theme.menuBg } p-1 rounded relative z-20` }>
-        <div className={ `${ theme.bg } rounded relative` }>
 
-          { children }
+        { children }
 
-        </div>
       </div>
     </div>
   )
