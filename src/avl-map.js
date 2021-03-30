@@ -746,7 +746,8 @@ const AvlMap = props => {
                       layersLoading={ state.layersLoading }
                       loadingLayers={ loadingLayers }
                       inactiveLayers={ inactiveLayers }
-                      MapActions={ MapActions }/>
+                      MapActions={ MapActions }
+                      pinned={ true }/>
                   </div>
                 )
               }
@@ -765,7 +766,8 @@ const AvlMap = props => {
                     layersLoading={ state.layersLoading }
                     loadingLayers={ loadingLayers }
                     inactiveLayers={ inactiveLayers }
-                    MapActions={ MapActions }/>
+                    MapActions={ MapActions }
+                    pinned={ false }/>
                 </div>
               ))
             }
