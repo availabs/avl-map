@@ -14,7 +14,14 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
       if (c.legend) {
         a[0] = c;
       }
-      if (c.infoBoxes.length) {
+      if (c.infoBoxes.reduce((aa, cc) => {
+            let show = Boolean(cc.show);
+            if (typeof cc.show === "function") {
+              show = cc.show(c);
+            }
+            return aa || show;
+          }, false)
+      ) {
         a[1].push(c);
         a[2] = Math.max(a[2],
           c.infoBoxes.reduce((aa, cc) => Math.max(aa, get(cc, "width", 0)), 0)
@@ -37,6 +44,7 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
       { !legendLayer ? null :
         legendLayer.legend.show ?
         <LegendContainer { ...legendLayer.legend }
+          MapActions={ MapActions } layer={ legendLayer }
           padding={ padding } infoBoxWidth={ infoBoxWidth }/>
         : null
       }
@@ -56,13 +64,21 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
                   ${ i === 0 ? "" : "mt-1" }
                   ${ theme.menuBg } p-1 rounded
                 ` }>
-                { layer.infoBoxes.map((box, ii) =>
-                    <InfoBox key={ ii } { ...props } { ...box }
-                      index={ ii } layer={ layer }
-                      MapActions={ MapActions }
-                      activeLayers={ activeLayers }
-                      containerNode={ node }/>
-                  )
+                { layer.infoBoxes
+                    .filter(({ show }) => {
+                      let bool = Boolean(show);
+                      if (typeof show === "function") {
+                        bool = show(layer);
+                      }
+                      return bool;
+                    })
+                    .map((box, ii) =>
+                      <InfoBox key={ ii } { ...props } { ...box }
+                        index={ ii } layer={ layer }
+                        MapActions={ MapActions }
+                        activeLayers={ activeLayers }
+                        containerNode={ node }/>
+                    )
                 }
               </div>
             )
@@ -95,7 +111,8 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
               flex-1 ${ isOpen ? "opacity-100" : "opacity-50" } transition
             ` }>
               { typeof Header === "function" ?
-                <Header layer={ layer }/> :
+                <Header layer={ layer }
+                  MapActions={ MapActions }/> :
                 Header
               }
             </div>
@@ -122,7 +139,7 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
   )
 }
 
-const LegendContainer = ({ infoBoxWidth, padding, width = 420, title, ...props }) => {
+const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions, layer, ...props }) => {
 
   const theme = useTheme();
 
@@ -136,9 +153,13 @@ const LegendContainer = ({ infoBoxWidth, padding, width = 420, title, ...props }
     } }>
       <div className={ `${ theme.menuBg } p-1 rounded` }>
         <div className={ `${ theme.bg } px-1 rounded` }>
-          { title ?
+          { Title ?
             <div className="font-bold text-xl">
-              { title }
+              { typeof Title === "function" ?
+                <Title layer={ layer }
+                  MapActions={ MapActions }/> :
+                Title
+              }
             </div> :
             <div className="pt-1"/>
           }

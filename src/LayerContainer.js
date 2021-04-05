@@ -1,3 +1,5 @@
+import mapboxgl from "mapbox-gl"
+
 import { hasValue } from "@availabs/avl-components"
 
 import DefaultHoverComp from "./components/DefaultHoverComp"
@@ -18,11 +20,14 @@ const DefaultOptions = {
   sources: [],
   layers: [],
   isVisible: true,
-  toolbar: ["toggle-visibility"],
+  toolbar: ["toggleVisibility"],
   legend: null,
   infoBoxes: [],
   state: {},
-  mapboxMap: null
+  mapboxMap: null,
+  onHover: false,
+  onClick: false,
+  onBoxSelect: false
 }
 
 class LayerContainer {
@@ -93,6 +98,13 @@ class LayerContainer {
     if (this.onClick) {
       this.addClick(mapboxMap);
     }
+    if (this.onBoxSelect) {
+      this.state = {
+        ...this.state,
+        selection: []
+      };
+      this.addBoxSelect(mapboxMap);
+    }
     return this.onAdd(mapboxMap, falcor);
   }
   onAdd(mapboxMap, falcor) {
@@ -100,13 +112,12 @@ class LayerContainer {
   }
 
   addClick(mapboxMap) {
-    const click = ({ point, features, lngLat }) => {
-      const properties = features.map(({ properties }) => ({ ...properties }));
-      this.onClick.callback.call(this, properties, lngLat, point);
+    function click(layerId, { point, features, lngLat }) {
+      this.onClick.callback.call(this, layerId, features, lngLat, point);
     };
 
     this.onClick.layers.forEach(layerId => {
-      const callback = click.bind(this);
+      const callback = click.bind(this, layerId);
       this.callbacks.push({
         action: "click",
         callback,
@@ -128,31 +139,62 @@ class LayerContainer {
   addHover(mapboxMap, updateHover) {
 
     const callback = get(this, ["onHover", "callback"], DefaultCallback).bind(this),
-      HoverComp = get(this, ["onHover", "HoverComp"], DefaultHoverComp);
+      HoverComp = get(this, ["onHover", "HoverComp"], DefaultHoverComp),
+      property = get(this, ["onHover", "property"], null),
+      filterFunc = get(this, ["onHover", "filterFunc"], null);
 
     const mousemove = (layerId, { point, features, lngLat }) => {
 
       const hoveredFeatures = this.hoveredFeatures.get(layerId) || new Map();
       this.hoveredFeatures.set(layerId, new Map());
 
-      features.forEach(({ id, source, sourceLayer }) => {
-        if ((id === undefined) || (id === null)) return;
+      const hoverFeatures = features => {
+        features.forEach(({ id, source, sourceLayer }) => {
+          if ((id === undefined) || (id === null)) return;
 
-        if (hoveredFeatures.has(id)) {
-          this.hoveredFeatures.get(layerId).set(id, hoveredFeatures.get(id));
-          hoveredFeatures.delete(id);
+          if (hoveredFeatures.has(id)) {
+            this.hoveredFeatures.get(layerId).set(id, hoveredFeatures.get(id));
+            hoveredFeatures.delete(id);
+          }
+          else {
+            const value = { id, source, sourceLayer };
+            this.hoveredFeatures.get(layerId).set(id, value);
+            mapboxMap.setFeatureState(value, { hover: true });
+          }
+        });
+      }
+
+      if (property) {
+        const properties = features.reduce((a, c) => {
+          const prop = get(c, ["properties", property], null);
+          if (prop) {
+            a[prop] = true;
+          }
+          return a;
+        }, {})
+        hoverFeatures(
+          mapboxMap.queryRenderedFeatures({
+            layers: [layerId],
+            filter: ["in", ["get", property], ["literal", Object.keys(properties)]]
+          })
+        );
+      }
+      if (filterFunc) {
+        const filter = filterFunc.call(this, layerId, features, lngLat, point);
+        if (filter) {
+          hoverFeatures(
+            mapboxMap.queryRenderedFeatures({ layers: [layerId], filter })
+          );
         }
-        else {
-          const value = { id, source, sourceLayer };
-          this.hoveredFeatures.get(layerId).set(id, value);
-          mapboxMap.setFeatureState(value, { hover: true });
-        }
-      });
+      }
+
+      hoverFeatures(features);
+
       hoveredFeatures.forEach(value => {
         mapboxMap.setFeatureState(value, { hover: false });
       })
 
-      const data = callback(layerId, features, lngLat);
+      const data = callback(layerId, features, lngLat, point);
 
       if (hasValue(data)) {
         updateHover({
@@ -193,10 +235,132 @@ class LayerContainer {
     }, this);
   }
 
+  addBoxSelect(mapboxMap) {
+    let start, current, box;
+
+    const canvasContainer = mapboxMap.getCanvasContainer();
+
+    const getPos = e => {
+      const rect = canvasContainer.getBoundingClientRect();
+      return new mapboxgl.Point(
+        e.clientX - rect.left - canvasContainer.clientLeft,
+        e.clientY - rect.top - canvasContainer.clientTop
+      )
+    }
+
+    const mousemove = e => {
+      e.preventDefault();
+
+      current = getPos(e);
+
+      if (!box) {
+        const className = get(this, ["onBoxSelect", "className"], "bg-black bg-opacity-50 border-2 border-black");
+        box = document.createElement("div");
+        box.className = "absolute top-0 left-0 w-0 h-0 " + className;
+        canvasContainer.appendChild(box);
+      }
+
+      var minX = Math.min(start.x, current.x),
+        maxX = Math.max(start.x, current.x),
+        minY = Math.min(start.y, current.y),
+        maxY = Math.max(start.y, current.y);
+
+        box.style.transform = `translate( ${ minX }px, ${ minY }px)`;
+        box.style.width = `${ maxX - minX }px`;
+        box.style.height = `${ maxY - minY }px`;
+    }
+    const mouseup = e => {
+      finish([start, getPos(e)]);
+    }
+    const keyup = e => {
+      if ((e.keyCode === 27) || (e.which === 27) || (e.code === 'Escape')) {
+        finish();
+      }
+    }
+
+    const finish = bbox => {
+      document.removeEventListener('mousemove', mousemove);
+      document.removeEventListener('mouseup', mouseup);
+      document.removeEventListener('keydown', keyup);
+
+      mapboxMap.dragPan.enable();
+
+      if (box) {
+        box.parentNode.removeChild(box);
+        box = null;
+      }
+
+      if (bbox) {
+        const queriedFeatures = mapboxMap.queryRenderedFeatures(bbox, {
+          layers: get(this, ["onBoxSelect", "layers"]),
+          filter: get(this, ["onBoxSelect", "filter"])
+        })
+
+        const featureMap = queriedFeatures.reduce((a, c) => {
+          a[c.id] = c;
+          return a;
+        }, {});
+
+        const features = Object.values(featureMap);
+
+        const values = [];
+
+        features.forEach(feature => {
+          values.push({
+            id: feature.id,
+            source: feature.source,
+            sourceLayer: feature.sourceLayer
+          });
+        });
+
+        get(this, ["onBoxSelect", "selectedValues"], [])
+          .forEach(value => {
+            mapboxMap.setFeatureState(value, { select: false });
+          });
+
+        this.onBoxSelect.selectedValues = values;
+
+        values.forEach(value => {
+          mapboxMap.setFeatureState(value, { select: true });
+        });
+
+        this.updateState({ selection: features });
+      }
+    }
+
+    const mousedown = e => {
+      if (!(e.shiftKey && e.button === 0)) return;
+
+      document.addEventListener('mousemove', mousemove);
+      document.addEventListener('mouseup', mouseup);
+      document.addEventListener('keydown', keyup);
+
+      mapboxMap.dragPan.disable();
+
+      start = getPos(e);
+    }
+
+    this.callbacks.push({
+      action: "mousemove",
+      callback: mousemove,
+      element: canvasContainer
+    });
+    canvasContainer.addEventListener("mousedown", mousedown, true);
+
+    mapboxMap.boxZoom.disable();
+
+    this.onBoxSelect.selectedValues = [];
+  }
+
   _onRemove(mapboxMap) {
     while (this.callbacks.length) {
-      const { action, layerId, callback } = this.callbacks.pop();
-      mapboxMap.off(action, layerId, callback);
+      const { action, layerId, callback, element } = this.callbacks.pop();
+      if (element) {
+        element.removeEventListener(action, callback);
+      }
+      else {
+        mapboxMap.off(action, layerId, callback);
+      }
     }
     this.layers.forEach(({ id }) => {
       mapboxMap.removeLayer(id);

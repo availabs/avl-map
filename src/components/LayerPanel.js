@@ -61,9 +61,7 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
 export default LayerPanel;
 
 export const Icon = ({ onClick, cursor="cursor-pointer", className="", style={}, children }) => {
-
   const theme = useTheme();
-
   return (
     <div onClick={ onClick }
       className={ `
@@ -75,10 +73,9 @@ export const Icon = ({ onClick, cursor="cursor-pointer", className="", style={},
     </div>
   )
 }
+
 const LayerHeader = ({ layer, toggleOpen, open, MapActions }) => {
-
   const theme = useTheme();
-
   return (
     <div className={ `flex flex-col px-1 ${ theme.bg } rounded` }>
       <div className="flex items-center">
@@ -116,11 +113,9 @@ const LayerHeader = ({ layer, toggleOpen, open, MapActions }) => {
 
 const LegendControls = ({ layer, MapActions }) => {
 
-  const theme = useTheme();
-
   const { extendSidebar, passCompProps, closeExtension, open } = useSidebarContext();
 
-  const range = get(layer, ["legend", "range"], []);
+  const { range, type, types } = get(layer, "legend", {});
 
   const [toolState, dispatch] = useLegendReducer(range.length);
 
@@ -128,7 +123,8 @@ const LegendControls = ({ layer, MapActions }) => {
     MapActions.updateLegend(layer, update);
   }, [layer, MapActions]);
 
-  const ref = React.useRef();
+  const theme = useTheme(),
+    ref = React.useRef();
 
   const onClick = React.useCallback(e => {
     if (open === 2) return closeExtension();
@@ -139,8 +135,8 @@ const LegendControls = ({ layer, MapActions }) => {
   }, [ref, extendSidebar, closeExtension, open, layer, range, updateLegend, dispatch, toolState]);
 
   React.useEffect(() => {
-    passCompProps({ layer, range, updateLegend, dispatch, toolState });
-  }, [layer, range, updateLegend, toolState, passCompProps, dispatch]);
+    passCompProps({ layer, updateLegend, dispatch, toolState, range, type, types });
+  }, [layer, range, type, types, updateLegend, toolState, passCompProps, dispatch]);
 
   return (
     <div ref={ ref } className={ `
@@ -154,19 +150,16 @@ const LegendControls = ({ layer, MapActions }) => {
     </div>
   )
 }
-const LegendSidebar = ({ layer, range, updateLegend, dispatch, toolState }) => {
-
+const LegendSidebar = ({ toolState, ...props }) => {
   const theme = useTheme();
-
   return (
     <div className={ `
-        p-1 rounded-r cursor-auto ${ theme.sidebarBg } w-full
-      ` }>
+      p-1 rounded-r cursor-auto ${ theme.sidebarBg } w-full
+    ` }>
       <div className={ `${ theme.menuBg } relative p-1 rounded` }>
         <div className={ `rounded p-1 ${ theme.bg }` }>
-          <DummyLegendTools layer={ layer } current={ range }
-            updateLegend={ updateLegend }
-            dispatch={ dispatch } { ...toolState }/>
+
+          <DummyLegendTools { ...props } { ...toolState }/>
 
         </div>
       </div>
@@ -174,27 +167,40 @@ const LegendSidebar = ({ layer, range, updateLegend, dispatch, toolState }) => {
   )
 }
 
-const DefaultToolbars = {
-  "toggle-visibility":
-    ({ MapActions, layer }) => (
-      <Icon onClick={ e => MapActions.toggleVisibility(layer) }>
-        <span className={ `fa fa-sm ${ layer.isVisible ? "fa-eye" : "fa-eye-slash" }` }/>
-      </Icon>
-    )
-};
+const checkDefaultTools = tool => {
+  if (typeof tool !== "string") return tool;
 
-const LayerTool = ({ tool, layer, MapActions }) => {
+  switch (tool) {
+    case "toggle-visibility":
+      return {
+        tooltip: "Toogle Visibility",
+        icon: layer => layer.isVisible ? "fa-eye" : "fa-eye-slash",
+        action: ({ toggleVisibility }, layer) => toggleVisibility(layer)
+      };
+    default:
+      return {
+        tooltip: `Unknown Tool "${ tool }"`,
+        icon: "fa-thumbs-down",
+        action: e => {}
+      };
+  }
+}
+
+const LayerTool = ({ tool, MapActions, layer }) => {
+
   const Tool = React.useMemo(() => {
-    if (tool in DefaultToolbars) {
-      return DefaultToolbars[tool];
-    }
-    return ({ layer, MapActions }) => (
-      <Icon onClick={ e => tool.actionFunc(MapActions, layer) }>
-        <span className={ `fa fa-sm ${ tool.icon }` }/>
-      </Icon>
-    )
+    return checkDefaultTools(tool);
   }, [tool]);
+
+  const action = React.useCallback(e => {
+    Tool.action(MapActions, layer);
+  }, [Tool, MapActions, layer]);
+
+  const icon = typeof Tool.icon === "function" ? Tool.icon(layer) : Tool.icon;
+
   return (
-    <Tool layer={ layer } MapActions={ MapActions }/>
+    <Icon onClick={ action }>
+      <span className={ `fa fa-sm ${ icon }` }/>
+    </Icon>
   )
 };

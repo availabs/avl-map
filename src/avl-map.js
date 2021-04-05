@@ -293,7 +293,8 @@ const AvlMap = props => {
     mapOptions = EmptyObject,
     layers = EmptyArray,
     sidebar = EmptyObject,
-    layerProps = EmptyObject
+    layerProps = EmptyObject,
+    // singleLayer = false
   } = props;
 
   const { falcor, falcorCache } = useFalcor();
@@ -302,10 +303,8 @@ const AvlMap = props => {
 
   const initializedLayers = React.useRef([]);
 
-  const updateHover = React.useMemo(() => {
-    return hoverData => {
-      dispatch(hoverData);
-    };
+  const updateHover = React.useCallback(hoverData => {
+    dispatch(hoverData);
   }, []);
 
   const projectLngLat = React.useCallback(lngLat => {
@@ -378,11 +377,17 @@ const AvlMap = props => {
     layer._onAdd(state.map, falcor, updateHover)
       .then(() => layer.render(state.map, falcor));
 
+    // if (singleLayer) {
+    //   dispatch({
+    //     type: "deactivate-layer"
+    //   })
+    // }
+
     dispatch({
       type: "activate-layer",
       layerId: layer.id
     });
-  }, [state.map, falcor, updateHover]);
+  }, [state.map, falcor, updateHover/*, singleLayer*/]);
   const removeLayer = React.useCallback(layer => {
 
     layer._onRemove(state.map);

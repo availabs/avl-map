@@ -4,64 +4,6 @@ import { Select, useTheme, CollapsibleSidebar } from "@availabs/avl-components"
 
 import LayerPanel from "./LayerPanel"
 
-const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...rest }) => {
-
-  const Tabs = React.useMemo(() => {
-    return tabs.map(tab => {
-      if (tab in SidebarTabs) {
-        return SidebarTabs[tab];
-      }
-      return tab;
-    })
-  }, [tabs]);
-
-  const theme = useTheme();
-
-  return (
-    <CollapsibleSidebar startOpen={ open }
-      placeBeside={ children }>
-
-      <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
-        { !title ? null :
-          <div className="text-xl font-bold ml-1">
-            { title }
-          </div>
-        }
-        <div className="flex">
-          { Tabs.map(({ icon }, i) => (
-              <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
-                className={ `
-                  p-1 rounded-t-lg mb-1 ${ i > 0 ? "ml-1" : "" }
-                  ${ theme.menuBg }
-                ` }>
-                <div className={ `
-                    w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
-                    ${ i === sidebarTabIndex ?
-                      `${ theme.bg } ${ theme.menuTextActive }` :
-                      `${ theme.menuBg} cursor-pointer`
-                    } hover:${ theme.menuTextActive }
-                    flex items-center justify-center
-                  ` }>
-                  <span className={ `fa fa-lg ${ icon }` }/>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-        { Tabs.map(({ Component }, i) => (
-            <div key={ i } className="relative z-10"
-              style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
-              <Component { ...rest } MapActions={ MapActions }/>
-            </div>
-          ))
-        }
-      </div>
-
-    </CollapsibleSidebar>
-  )
-}
-export default Sidebar;
-
 const LayersTab = ({ inactiveLayers, activeLayers, MapActions, ...rest }) => {
 
   const theme = useTheme();
@@ -146,3 +88,61 @@ const SidebarTabs = {
     Component: StylesTab
   }
 }
+
+const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...rest }) => {
+
+  const Tabs = React.useMemo(() => {
+    return tabs.map(tab => {
+      if (tab in SidebarTabs) {
+        return SidebarTabs[tab];
+      }
+      return tab;
+    })
+  }, [tabs]);
+
+  const theme = useTheme();
+
+  return (
+    <CollapsibleSidebar startOpen={ open }
+      placeBeside={ children }>
+
+      <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
+        { !title ? null :
+          <div className="text-xl font-bold ml-1">
+            { title }
+          </div>
+        }
+        <div className="flex">
+          { Tabs.map(({ icon }, i) => (
+              <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
+                className={ `
+                  p-1 rounded-t-lg mb-1 ${ i > 0 ? "ml-1" : "" }
+                  ${ theme.menuBg }
+                ` }>
+                <div className={ `
+                    w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
+                    ${ i === sidebarTabIndex ?
+                      `${ theme.bg } ${ theme.menuTextActive }` :
+                      `${ theme.menuBg} cursor-pointer`
+                    } hover:${ theme.menuTextActive }
+                    flex items-center justify-center
+                  ` }>
+                  <span className={ `fa fa-lg ${ icon }` }/>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        { Tabs.map(({ Component }, i) => (
+            <div key={ i } className="relative z-10"
+              style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
+              <Component { ...rest } MapActions={ MapActions }/>
+            </div>
+          ))
+        }
+      </div>
+
+    </CollapsibleSidebar>
+  )
+}
+export default Sidebar;
