@@ -115,7 +115,7 @@ const Reducer = (state, action) => {
       return {
         ...state,
         activeLayers: [
-          payload.layerId,
+          payload.layer.id,
           ...state.activeLayers
         ],
         layerStates: {
@@ -387,7 +387,7 @@ const AvlMap = props => {
 
     dispatch({
       type: "activate-layer",
-      layerId: layer.id
+      layer
     });
   }, [state.map, falcor, updateHover/*, singleLayer*/]);
   const removeLayer = React.useCallback(layer => {
