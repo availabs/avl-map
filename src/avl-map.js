@@ -58,6 +58,7 @@ const getStaticImageUrl = (style, options = {}) => {
 
 const InitialState = {
   map: null,
+  initializedLayers: [],
   activeLayers: [],
   dynamicLayers: [],
   layersLoading: {},
@@ -80,14 +81,18 @@ const Reducer = (state, action) => {
     case "init-layer":
       return {
         ...state,
-        activeLayers: [
-          payload.layer.id,
-          ...state.activeLayers
-        ],
-        layerStates: {
-          ...state.layerStates,
-          [payload.layer.id]: payload.layer.state
-        }
+        initializedLayers: [
+          ...state.initializedLayers,
+          payload.layer.id
+        ]
+        // activeLayers: [
+        //   payload.layer.id,
+        //   ...state.activeLayers
+        // ],
+        // layerStates: {
+        //   ...state.layerStates,
+        //   [payload.layer.id]: payload.layer.state
+        // }
       };
     case "loading-start":
       return {
@@ -100,6 +105,7 @@ const Reducer = (state, action) => {
     case "loading-stop":
       return {
         ...state,
+        // activeLayers: [...state.activeLayers],
         layersLoading: {
           ...state.layersLoading,
           [payload.layerId]: Math.max(0, state.layersLoading[payload.layerId] - 1)
@@ -111,7 +117,11 @@ const Reducer = (state, action) => {
         activeLayers: [
           payload.layerId,
           ...state.activeLayers
-        ]
+        ],
+        layerStates: {
+          ...state.layerStates,
+          [payload.layer.id]: payload.layer.state
+        }
       };
     case "deactivate-layer":
       return {
@@ -301,8 +311,6 @@ const AvlMap = props => {
 
   const [state, dispatch] = React.useReducer(Reducer, InitialState);
 
-  const initializedLayers = React.useRef([]);
-
   const updateHover = React.useCallback(hoverData => {
     dispatch(hoverData);
   }, []);
@@ -377,12 +385,6 @@ const AvlMap = props => {
     layer._onAdd(state.map, falcor, updateHover)
       .then(() => layer.render(state.map, falcor));
 
-    // if (singleLayer) {
-    //   dispatch({
-    //     type: "deactivate-layer"
-    //   })
-    // }
-
     dispatch({
       type: "activate-layer",
       layerId: layer.id
@@ -411,14 +413,6 @@ const AvlMap = props => {
       modalKey
     });
   }, []);
-  // const updateModalData = React.useCallback((layerId, modalKey, data = {}) => {
-  //   dispatch({
-  //     type: "update-modal-data",
-  //     layerId,
-  //     modalKey,
-  //     data
-  //   });
-  // }, []);
   const closeModal = React.useCallback((layerId, modalKey) => {
     dispatch({
       type: "close-modal",
@@ -434,7 +428,6 @@ const AvlMap = props => {
     });
   }, []);
 
-  // const updateModal = React.useCallback(({ layerI}))
   const removePinnedHoverComp = React.useCallback(id => {
     dispatch({
       type: "remove-pinned",
@@ -510,9 +503,10 @@ const AvlMap = props => {
 
     [...layers,
       ...state.dynamicLayers
-    ].filter(({ id }) => !initializedLayers.current.includes(id)).reverse()
+    ].filter(({ id }) => !state.initializedLayers.includes(id)).reverse()
       .reduce((promise, layer) => {
-        initializedLayers.current.push(layer.id);
+
+        dispatch({ type: "init-layer", layer });
 
         layer.dispatchUpdate = (layer, newState) => {
           dispatch({
@@ -544,14 +538,14 @@ const AvlMap = props => {
               return layer.fetchData(falcor)
                 .then(() => layer._onAdd(state.map, falcor, updateHover))
                 .then(() => layer.render(state.map, falcor))
-                .then(() => dispatch({ type: "init-layer", layer }));
+                .then(() => dispatch({ type: "activate-layer", layer }));
             }
           })
           .then(() => {
             dispatch({ type: "loading-stop", layerId: layer.id });
           });
       }, Promise.resolve());
-  }, [state.map, state.dynamicLayers, falcor, layers, updateFilter, updateHover]);
+  }, [state.map, state.dynamicLayers, falcor, layers, updateFilter, updateHover, state.initializedLayers]);
 
   const pinHoverComp = React.useCallback(({ lngLat }) => {
     const marker = new mapboxgl.Marker()
@@ -592,7 +586,7 @@ const AvlMap = props => {
     const result = [
       ...layers,
       ...state.dynamicLayers
-    ].filter(({ id }) => initializedLayers.current.includes(id))
+    ].filter(({ id }) => state.initializedLayers.includes(id))
       .reduce((a, c) => {
         if (state.activeLayers.includes(c.id)) {
           a[0].push(c);
@@ -608,7 +602,7 @@ const AvlMap = props => {
     }, {});
     result[0].sort((a, b) => sortOrder[a.id] - sortOrder[b.id]);
     return result;
-  }, [layers, state.dynamicLayers, state.activeLayers]);
+  }, [layers, state.dynamicLayers, state.initializedLayers, state.activeLayers]);
 
   const setMapStyle = React.useCallback(styleIndex => {
     state.map.once('style.load', e => {
@@ -628,7 +622,7 @@ const AvlMap = props => {
     });
   }, [state.map, state.mapStyles, activeLayers, updateHover, falcor]);
 
-  const MapActions = {
+  const MapActions = React.useMemo(() => ({
     mapboxMap: state.map,
     layerStates: state.layerStates,
     toggleVisibility,
@@ -647,15 +641,22 @@ const AvlMap = props => {
     bringModalToFront,
     projectLngLat,
     saveMapAsImage
-  };
+  }), [
+    state.map, state.layerStates, toggleVisibility,
+    addLayer, removeLayer, addDynamicLayer, removeDynamicLayer,
+    updateLegend, setSidebarTab, setMapStyle,
+    showModal, closeModal, updateFilter,
+    removePinnedHoverComp, addPinnedHoverComp,
+    bringModalToFront, projectLngLat, saveMapAsImage
+  ]);
 
 // SEND PROPS TO ACTIVE LAYERS
   React.useEffect(() => {
     activeLayers.forEach(layer => {
       const props = get(layerProps, layer.id, { falcorCache });
-      layer.receiveProps(props, state.map, falcor);
+      layer.receiveProps(props, state.map, falcor, MapActions);
     });
-  }, [state.map, falcor, falcorCache, activeLayers, layerProps]);
+  }, [state.map, falcor, falcorCache, activeLayers, layerProps, MapActions]);
 
   const ref = React.useRef(null),
     size = useSetSize(ref);
