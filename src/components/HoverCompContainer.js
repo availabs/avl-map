@@ -54,8 +54,8 @@ const getTransform = ({ x }, orientation) => {
   return "translate(50%, -50%) rotate(45deg) skew(-15deg, -15deg)"
 }
 
-const RemoveButton = ({ orientation, children,  }) => {
-  const theme = useTheme();
+const RemoveButton = ({ orientation, children, customeTheme={} }) => {
+  const theme = {...useTheme(), ...customeTheme};
   return (
     <div style={ {
         transform: orientation === "left" ?
@@ -71,7 +71,7 @@ const RemoveButton = ({ orientation, children,  }) => {
   )
 }
 
-export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }) => {
+export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width, customTheme }) => {
 
   const pos = project(lngLat);
 
@@ -84,14 +84,14 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
     };
   }, [pos]);
 
-  const theme = useTheme();
+  const theme = {...useTheme(), ...customTheme};
 
   return (
     <div className={ `
         absolute top-0 left-0 z-20 inline-block
         rounded whitespace-nowrap hover-comp
         pointer-events-auto
-        p-1 rounded ${ theme.sidebarBg }
+        p-1 rounded bg-npmrds-800
       ` }
       style={ {
         transform: getPinnedTranslate(pos, orientation.current),
@@ -99,11 +99,11 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
       } }>
 
       <div className={ `
-          absolute w-6 h-6 ${ theme.sidebarBg } rounded-bl rounded-tr
+          absolute w-6 h-6 bg-npmrds-800 rounded-bl rounded-tr
           ${ orientation.current === "left" ? "right-0" : "left-0" }
         ` }
         style={ style }/>
-      <div className={ `${ theme.menuBg } p-1 rounded relative z-20` }>
+      <div className={ `bg-npmrds-800 p-1 rounded relative z-20` }>
 
         <RemoveButton orientation={ orientation.current }>
           <Icon onClick={ e => remove(id) }>
@@ -119,11 +119,11 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
   )
 }
 
-export const HoverCompContainer = ({ show, children, lngLat, project, ...rest }) => {
-  const theme = useTheme();
+export const HoverCompContainer = ({ show, children, lngLat, project, customTheme={}, ...rest }) => {
+  const theme = {...useTheme(), ...customTheme};
 
   const pos = project(lngLat);
-
+  
   return (
     <div className={ `
         absolute top-0 left-0 z-20

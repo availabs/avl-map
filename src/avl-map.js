@@ -1,11 +1,9 @@
 import React from "react"
-
 import mapboxgl from "mapbox-gl"
-
 import get from "lodash.get"
-import styled from "styled-components"
 
-import { useFalcor, useSetSize } from "@availabs/avl-components"
+import { useSetSize, useFalcor } from "@availabs/avl-components"
+// import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar"
 import LoadingLayer from "./components/LoadingLayer"
@@ -294,6 +292,8 @@ const AvlMap = props => {
     layers = EmptyArray,
     sidebar = EmptyObject,
     layerProps = EmptyObject,
+    mapControl = 'bottom-right',
+    customTheme = {}
     // singleLayer = false
   } = props;
 
@@ -489,8 +489,12 @@ const AvlMap = props => {
     const map = new mapboxgl.Map({
       container: id,
       ...Options,
-      style: mapStyles[0].style
+      style: mapStyles[0].style,
     });
+
+    if (mapControl) {
+      map.addControl(new mapboxgl.NavigationControl(), mapControl);
+    }
 
     map.on("move", e => {
       dispatch({ type: "update-state", mapMoved: performance.now() });
@@ -513,6 +517,7 @@ const AvlMap = props => {
     ].filter(({ id }) => !initializedLayers.current.includes(id)).reverse()
       .reduce((promise, layer) => {
         initializedLayers.current.push(layer.id);
+        layer.customTheme = customTheme;
 
         layer.dispatchUpdate = (layer, newState) => {
           dispatch({
@@ -674,7 +679,7 @@ const AvlMap = props => {
   }, [activeLayers, state.modalData]);
 
   return (
-    <MapContainer ref={ ref } className="w-full h-full relative focus:outline-none">
+    <div ref={ ref } className="w-full h-full relative focus:outline-none">
 
       <div id={ id } className="w-full h-full relative"/>
 
@@ -686,11 +691,12 @@ const AvlMap = props => {
         inactiveLayers={ inactiveLayers }
         activeLayers={ activeLayers }
         loadingLayers={ loadingLayers }
+        customTheme={customTheme}
         MapActions={ MapActions }>
 
         <div className="absolute bottom-0">
           { loadingLayers.map(layer => (
-              <LoadingLayer key={ layer.id } layer={ layer }/>
+              <LoadingLayer key={ layer.id } layer={ layer } customTheme={customTheme} />
             ))
           }
         </div>
@@ -716,6 +722,7 @@ const AvlMap = props => {
       </Sidebar>
 
       <InfoBoxes activeLayers={ activeLayers }
+        customTheme={customTheme}
         layersLoading={ state.layersLoading }
         loadingLayers={ loadingLayers }
         inactiveLayers={ inactiveLayers }
@@ -740,6 +747,7 @@ const AvlMap = props => {
 
         { state.pinnedHoverComps.map(({ HoverComps, data, id, ...hoverData }) => (
             <PinnedHoverComp { ...hoverData } { ...size }
+              customTheme={customTheme}
               remove={ removePinnedHoverComp }
               project={ projectLngLat }
               key={ id } id={ id }>
@@ -748,6 +756,7 @@ const AvlMap = props => {
                     className={ `${ i > 0 ? "mt-1" : "" } relative` }>
                     <HoverComp key={ layer.id } layer={ layer } data={ data }
                       activeLayers={ activeLayers }
+                      customTheme={customTheme}
                       layersLoading={ state.layersLoading }
                       loadingLayers={ loadingLayers }
                       inactiveLayers={ inactiveLayers }
@@ -762,11 +771,12 @@ const AvlMap = props => {
 
         { !Boolean(state.hoverData.data.size) ? null :
           <HoverCompContainer { ...hoverData } { ...size }
-            project={ projectLngLat }>
+            customTheme={customTheme} project={ projectLngLat }>
             { HoverComps.map(({ HoverComp, data, layer }, i) => (
                 <div key={ layer.id }
                   className={ `${ i > 0 ? "mt-1" : "" } relative` }>
                   <HoverComp layer={ layer } data={ data }
+                    customTheme={customTheme}
                     activeLayers={ activeLayers }
                     layersLoading={ state.layersLoading }
                     loadingLayers={ loadingLayers }
@@ -781,16 +791,7 @@ const AvlMap = props => {
 
       </div>
 
-    </MapContainer>
+    </div>
   )
 }
 export { AvlMap };
-
-const MapContainer = styled.div`
-  .mapboxgl-map canvas {
-    display: block;
-  }
-  .mapboxgl-map canvas:focus {
-    outline: none;
-  }
-`

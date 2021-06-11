@@ -3,35 +3,42 @@ import React from "react"
 import get from "lodash.get"
 
 import {
-  Select,
   useTheme,
   ColorBar,
-  useSidebarContext,
   DummyLegendTools,
   useLegendReducer
 } from "@availabs/avl-components"
 
-const LayerPanel = ({ layer, layersLoading, ...rest }) => {
+import {
+  useSidebarContext,
+  Select
+} from 'modules/avl-components/src'
+
+const LayerPanel = ({ layer, layersLoading, customTheme, ...rest }) => {
 
   const [open, setOpen] = React.useState(true),
     toggleOpen = React.useCallback(e => {
       setOpen(!open);
     }, [open, setOpen]);
 
-  const theme = useTheme();
+  const theme = { ...useTheme(), ...customTheme }
 
   const filters = React.useMemo(() => {
     return Object.values(layer.filters)
-      .map(({ name, type, layerId, ...rest }, i) => {
+      .map(({ name, type, layerId, active=true, ...rest }, i) => {
+        if(!active) return 
         switch (type) {
           default:
             return (
-              <div className={ `mt-1 ${ theme.bg } p-1 rounded` }
+              <div className={ `mt-1 p-1` }
                 key={ `${ layerId }-${ name }` }>
-                <div className="text-base leading-4 mb-1">
+                <div className="text-sm text-npmrds-100 leading-4 pb-1">
                   { name }
                 </div>
-                <Select { ...rest }/>
+                <Select 
+                  customTheme={customTheme} { ...rest } 
+                  removable={rest.multi ? true : false}
+                />
               </div>
             )
         }
@@ -39,7 +46,7 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
   }, [layer.filters, theme]);
 
   return (
-    <div className={ `${ theme.menuBg } p-1 mb-1 rounded relative` }>
+    <div className={ `relative` }>
 
       <div className={ `
         absolute top-0 bottom-0 left-0 right-0 z-10 opacity-50
@@ -48,12 +55,14 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
       ` }/>
 
       <LayerHeader layer={ layer } { ...rest }
-        open={ open } toggleOpen={ toggleOpen }/>
+        open={ open } toggleOpen={ toggleOpen } customTheme={customTheme}/>
       <div style={ { display: open ? "block" : "none" } }>
         { !layer.legend ? null :
-          <LegendControls layer={ layer } { ...rest }/>
+          <LegendControls layer={ layer } { ...rest } customTheme={customTheme}/>
         }
+        <div className={`p-2 ${theme.accent1} mt-1`}>
         { filters }
+        </div>
       </div>
     </div>
   )
@@ -74,15 +83,15 @@ export const Icon = ({ onClick, cursor="cursor-pointer", className="", style={},
   )
 }
 
-const LayerHeader = ({ layer, toggleOpen, open, MapActions }) => {
-  const theme = useTheme();
+const LayerHeader = ({ layer, toggleOpen, open, MapActions, customTheme }) => {
+  const theme = { ...useTheme(), ...customTheme }
   return (
-    <div className={ `flex flex-col px-1 ${ theme.bg } rounded` }>
+    <div className={ `flex flex-col px-1 pb-4 pt-1 ${ theme.accent2 } border-l-4 border-red-400` }>
       <div className="flex items-center">
         <Icon cursor="cursor-move">
           <span className="fa fa-bars mr-1"/>
         </Icon>
-        <div className="font-semibold text-lg leading-5">
+        <div className="font-medium text-sm leading-5">
           { layer.name }
         </div>
         <div className="flex-1 flex justify-end">
@@ -111,7 +120,7 @@ const LayerHeader = ({ layer, toggleOpen, open, MapActions }) => {
   )
 }
 
-const LegendControls = ({ layer, MapActions }) => {
+const LegendControls = ({ layer, MapActions,customTheme }) => {
 
   const { extendSidebar, passCompProps, closeExtension, open } = useSidebarContext();
 
@@ -123,41 +132,41 @@ const LegendControls = ({ layer, MapActions }) => {
     MapActions.updateLegend(layer, update);
   }, [layer, MapActions]);
 
-  const theme = useTheme(),
+  const theme = { ...useTheme(), ...customTheme },
     ref = React.useRef();
 
   const onClick = React.useCallback(e => {
     if (open === 2) return closeExtension();
 
     const rect = ref.current.getBoundingClientRect();
-    const compProps = { layer, range, updateLegend, dispatch, toolState };
+    const compProps = { layer, range, updateLegend, dispatch, toolState, customTheme };
     extendSidebar({ Comp: LegendSidebar, compProps, top: `calc(${ rect.top }px - 0.5rem)` });
-  }, [ref, extendSidebar, closeExtension, open, layer, range, updateLegend, dispatch, toolState]);
+  }, [ref, extendSidebar, closeExtension, open, layer, range, updateLegend, dispatch, toolState,customTheme]);
 
   React.useEffect(() => {
-    passCompProps({ layer, updateLegend, dispatch, toolState, range, type, types });
-  }, [layer, range, type, types, updateLegend, toolState, passCompProps, dispatch]);
+    passCompProps({ layer, updateLegend, dispatch, toolState, range, type, types,customTheme });
+  }, [layer, range, type, types, updateLegend, toolState, passCompProps, dispatch, customTheme]);
 
   return (
     <div ref={ ref } className={ `
-      mt-1 ${ theme.bg } hover:${ theme.accent1 }
-      px-1 pb-1 rounded transition relative cursor-pointer
+      mt-1 ${ theme.accent1 } hover:${ theme.accent2 }
+      px-3 pt-2 pb-4 transition relative cursor-pointer
     ` } onClick={ onClick }>
 
-      <div>Legend Controls</div>
+      <div className={`${theme.menuText}`}>Legend Controls</div>
       <ColorBar colors={ range } small/>
 
     </div>
   )
 }
-const LegendSidebar = ({ toolState, ...props }) => {
-  const theme = useTheme();
+const LegendSidebar = ({ toolState, customTheme,...props }) => {
+  const theme = { ...useTheme(), ...customTheme }
   return (
     <div className={ `
-      p-1 rounded-r cursor-auto ${ theme.sidebarBg } w-full
+      p-1 cursor-auto bg-npmrds-800 w-full
     ` }>
-      <div className={ `${ theme.menuBg } relative p-1 rounded` }>
-        <div className={ `rounded p-1 ${ theme.bg }` }>
+      <div className={ `${ theme.siderbarBg } relative` }>
+        <div className={ ` p-1 ${ theme.accent1 } text-npmrds-100` }>
 
           <DummyLegendTools { ...props } { ...toolState }/>
 

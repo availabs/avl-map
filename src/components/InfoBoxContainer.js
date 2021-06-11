@@ -6,10 +6,11 @@ import { useTheme, Legend } from "@availabs/avl-components"
 
 import { Icon } from "./LayerPanel"
 
-const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, ...props }) => {
+const InfoBoxContainer = ({ activeLayers, width = 420, padding = 8, MapActions, customTheme, ...props }) => {
 
   const [node, setNode] = React.useState();
 
+  
   const [legendLayer, infoBoxLayers, infoBoxWidth] = activeLayers.reduce((a, c) => {
       if (c.legend) {
         a[0] = c;
@@ -30,7 +31,8 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
       return a;
     }, [null, [], width]);
 
-  const theme = useTheme();
+  const theme = {...useTheme(),...customTheme}
+
 
   return (
     <div ref={ setNode }
@@ -43,7 +45,8 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
 
       { !legendLayer ? null :
         legendLayer.legend.show ?
-        <LegendContainer { ...legendLayer.legend }
+        <LegendContainer 
+          { ...legendLayer.legend } customTheme={customTheme}
           MapActions={ MapActions } layer={ legendLayer }
           padding={ padding } infoBoxWidth={ infoBoxWidth }/>
         : null
@@ -51,7 +54,7 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
 
       { !infoBoxLayers.length ? null :
         <div className={ `
-            ${ theme.sidebarBg } p-1 rounded
+            ${ theme.sidebarBg } p-1
             scrollbar-sm overflow-y-auto overflow-x-visible
             pointer-events-auto
           ` }
@@ -76,6 +79,7 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
                       <InfoBox key={ ii } { ...props } { ...box }
                         index={ ii } layer={ layer }
                         MapActions={ MapActions }
+                        customTheme={customTheme}
                         activeLayers={ activeLayers }
                         containerNode={ node }/>
                     )
@@ -91,15 +95,15 @@ const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, 
 }
 export default InfoBoxContainer;
 
-const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...props }) => {
+const InfoBox = ({ layer, Header, Component, index, MapActions, customTheme, open = true, ...props }) => {
 
   const [isOpen, setOpen] = React.useState(open);
 
-  const theme = useTheme();
+  const theme = {...useTheme(),...customTheme}
 
   return (
     <div className={ `
-      ${ theme.bg } px-1 ${ isOpen ? "pb-1" : "" } rounded
+      ${ theme.accent1 } px-1 ${ isOpen ? "pb-1" : "" }
       ${ index === 0 ? "" : "mt-1" }
     ` }>
       { !Header ? <div className="pt-1"/> :
@@ -125,7 +129,7 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
       }
       { !Component || !isOpen ? null :
         <div className={ `
-          ${ theme.accent1 } p-1 rounded
+          ${ theme.accent1 } ${theme.menuText} p-1
         ` }>
           { typeof Component === "function" ?
             <Component layer={ layer }
@@ -139,9 +143,9 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
   )
 }
 
-const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions, layer, ...props }) => {
+const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions, customTheme, layer, ...props }) => {
 
-  const theme = useTheme();
+  const theme = {...useTheme(),...customTheme}
 
   return (
     <div className={ `
@@ -151,10 +155,10 @@ const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions
       width: `${ Math.max(infoBoxWidth, width) - padding * 2 }px`,
       marginBottom: "-0.25rem"
     } }>
-      <div className={ `${ theme.menuBg } p-1 rounded` }>
-        <div className={ `${ theme.bg } px-1 rounded` }>
+      <div className={ `${ theme.menuBg } p-1 ` }>
+        <div className={ `${ theme.bg } px-3 pb-1` }>
           { Title ?
-            <div className="font-bold text-xl">
+            <div className={`font-medium text-lg ${theme.menuText} py-1`}>
               { typeof Title === "function" ?
                 <Title layer={ layer }
                   MapActions={ MapActions }/> :

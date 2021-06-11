@@ -1,18 +1,22 @@
 import React from "react"
 
-import { Select, useTheme, CollapsibleSidebar } from "@availabs/avl-components"
+import { Select, useTheme } from "@availabs/avl-components"
+
+import {
+  CollapsibleSidebar
+} from 'modules/avl-components/src'
 
 import LayerPanel from "./LayerPanel"
 
-const LayersTab = ({ inactiveLayers, activeLayers, MapActions, ...rest }) => {
+const LayersTab = ({ inactiveLayers, activeLayers, MapActions, customTheme = {}, ...rest }) => {
 
-  const theme = useTheme();
+  const theme = { ...useTheme(), ...customTheme }
 
   return (
     <>
       { !inactiveLayers.length ? null :
-        <div className={ `mb-1 p-1 ${ theme.menuBg } rounded` }>
-          <div className={ `p-1 ${ theme.bg } rounded` }>
+        <div className={ `mb-1 p-1 ${ theme.menuBg } ${theme.rounded}` }>
+          <div className={ `p-1 ${ theme.bg } ${theme.rounded}` }>
             <Select options={ inactiveLayers }
               placeholder="Add a Layer..."
               accessor={ ({ name }) => name }
@@ -23,16 +27,18 @@ const LayersTab = ({ inactiveLayers, activeLayers, MapActions, ...rest }) => {
         </div>
       }
       { activeLayers.map(layer =>
-          <LayerPanel key={ layer.id } { ...rest }
+          <LayerPanel 
+            key={ layer.id } { ...rest }
+            customTheme={customTheme}
             layer={ layer } MapActions={ MapActions }/>
         )
       }
     </>
   )
 }
-const StylesTab = ({ mapStyles, styleIndex, MapActions }) => {
+const StylesTab = ({ mapStyles, styleIndex, MapActions, customTheme }) => {
 
-  const theme = useTheme();
+  const theme = { ...useTheme(), ...customTheme }
 
   const [loading, setLoading] = React.useState(false);
   React.useEffect(() => {
@@ -49,25 +55,25 @@ const StylesTab = ({ mapStyles, styleIndex, MapActions }) => {
   }, [MapActions]);
 
   return (
-    <div className={ `${ theme.menuBg } p-1 rounded` }>
+    <div className={ `${ theme.menuBg } ${theme.rounded}` }>
 
       <div className={ `
         absolute top-0 bottom-0 left-0 right-0 opacity-50 z-10
         ${ theme.sidebarBg } ${ loading ? "block" : "hidden" }
       ` }/>
 
-      <div className={ `${ theme.bg } p-1 rounded relative` }>
+      <div className={ `${ theme.bg } p-1 ${theme.rounded} relative` }>
 
         { mapStyles.map(({ name, imageUrl }, i) =>
             <div key={ i } className={ `
-              ${ i === 0 ? "" : "mt-1" } p-1 rounded hover:${ theme.menuTextActive }
+              ${ i === 0 ? "" : "mt-1" } p-1 ${theme.rounded} hover:${ theme.menuTextActive }
               flex items-center hover:${ theme.accent2 } transition
               ${ i === styleIndex ?
                 `border-r-4 ${ theme.borderInfo } ${ theme.accent2 }` :
                 `${ theme.accent1 } cursor-pointer`
               }
             ` } onClick={ i === styleIndex ? null : e => updateStyle(i) }>
-              <img src={ imageUrl } alt={ name } className="rounded"/>
+              <img src={ imageUrl } alt={ name } className={`${theme.rounded}`}/>
               <div className="ml-2">{ name }</div>
             </div>
           )
@@ -89,7 +95,7 @@ const SidebarTabs = {
   }
 }
 
-const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...rest }) => {
+const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, customTheme, ...rest }) => {
 
   const Tabs = React.useMemo(() => {
     return tabs.map(tab => {
@@ -99,47 +105,52 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...
       return tab;
     })
   }, [tabs]);
-
-  const theme = useTheme();
+  //console.log('test 123', customTheme)
+  const theme = { ...useTheme(), ...customTheme }
 
   return (
     <CollapsibleSidebar startOpen={ open }
-      placeBeside={ children }>
+      placeBeside={ children }
+      customTheme={customTheme}>
 
-      <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
-        { !title ? null :
-          <div className="text-xl font-bold ml-1">
-            { title }
-          </div>
-        }
-        <div className="flex">
-          { Tabs.map(({ icon }, i) => (
-              <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
-                className={ `
-                  p-1 rounded-t-lg mb-1 ${ i > 0 ? "ml-1" : "" }
-                  ${ theme.menuBg }
-                ` }>
-                <div className={ `
-                    w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
-                    ${ i === sidebarTabIndex ?
-                      `${ theme.bg } ${ theme.menuTextActive }` :
-                      `${ theme.menuBg} cursor-pointer`
-                    } hover:${ theme.menuTextActive }
-                    flex items-center justify-center
+      <div className={ `h-full ${ theme.sidebarBg } ${theme.rounded}` } style={{fontFamily:`"Helvetica Neue", Arial, Helvetica, sans-serif`}}>
+        <div className={`${theme.accent1}`}>
+          { !title ? null :
+            <div className="text-xl font-medium pl-1">
+              { title }
+            </div>
+          }
+          <div className="flex">
+            { Tabs.map(({ icon }, i) => (
+                <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
+                  className={ `
+                    p-1 ${ i > 0 ? "ml-1" : "" }
+                    ${ theme.menuBg }
                   ` }>
-                  <span className={ `fa fa-lg ${ icon }` }/>
+                  <div className={ `
+                      w-10 h-9 hover:${ theme.bg } transition
+                      ${ i === sidebarTabIndex ?
+                        `${ theme.menuTextActive } border-b-2 border-teal-300` :
+                        `${ theme.menuBg} cursor-pointer`
+                      } hover:${ theme.menuTextActive }
+                      flex items-center justify-center
+                    ` }>
+                    <span className={ `fa fa-lg ${ icon }` }/>
+                  </div>
                 </div>
+              ))
+            }
+          </div>
+        </div>
+        <div className='p-1'>
+          { Tabs.map(({ Component }, i) => (
+              <div key={ i } className="relative z-10"
+                style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
+                <Component { ...rest } MapActions={ MapActions } customTheme={customTheme}/>
               </div>
             ))
           }
         </div>
-        { Tabs.map(({ Component }, i) => (
-            <div key={ i } className="relative z-10"
-              style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
-              <Component { ...rest } MapActions={ MapActions }/>
-            </div>
-          ))
-        }
       </div>
 
     </CollapsibleSidebar>
