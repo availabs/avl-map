@@ -20,7 +20,7 @@ const DefaultOptions = {
   sources: [],
   layers: [],
   isVisible: true,
-  toolbar: ["toggleVisibility"],
+  toolbar: ["toggle-visibility"],
   legend: null,
   infoBoxes: [],
   state: {},
@@ -83,7 +83,12 @@ class LayerContainer {
     });
     this.layers.forEach(layer => {
       if (!mapboxMap.getLayer(layer.id)) {
-        mapboxMap.addLayer(layer, layer.beneath);
+        if (layer.beneath && mapboxMap.getLayer(layer.beneath)) {
+          mapboxMap.addLayer(layer, layer.beneath);
+        }
+        else {
+          mapboxMap.addLayer(layer);
+        }
         if (!this.isVisible) {
           this._setVisibilityNone(mapboxMap, layer.id);
         }
@@ -117,13 +122,23 @@ class LayerContainer {
     };
 
     this.onClick.layers.forEach(layerId => {
-      const callback = click.bind(this, layerId);
-      this.callbacks.push({
-        action: "click",
-        callback,
-        layerId
-      });
-      mapboxMap.on("click", layerId, callback);
+      if (layerId === "mapboxMap") {
+        const callback = click.bind(this, layerId);
+        this.callbacks.push({
+          action: "click",
+          callback
+        });
+        mapboxMap.on("click", callback);
+      }
+      else {
+        const callback = click.bind(this, layerId);
+        this.callbacks.push({
+          action: "click",
+          callback,
+          layerId
+        });
+        mapboxMap.on("click", layerId, callback);
+      }
     });
   }
 
@@ -358,8 +373,11 @@ class LayerContainer {
       if (element) {
         element.removeEventListener(action, callback);
       }
-      else {
+      else if (layerId) {
         mapboxMap.off(action, layerId, callback);
+      }
+      else {
+        mapboxMap.off(action, callback);
       }
     }
     this.layers.forEach(({ id }) => {
