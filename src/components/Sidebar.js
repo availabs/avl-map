@@ -36,7 +36,7 @@ const LayersTab = ({ inactiveLayers, activeLayers, MapActions, customTheme = {},
     </>
   )
 }
-const StylesTab = ({ mapStyles, styleIndex, MapActions, customTheme }) => {
+const StylesTab = ({ mapStyles, styleIndex, MapActions, mapboxMap, customTheme }) => {
 
   const theme = { ...useTheme(), ...customTheme }
 
@@ -44,10 +44,10 @@ const StylesTab = ({ mapStyles, styleIndex, MapActions, customTheme }) => {
   React.useEffect(() => {
     if (loading) {
       const done = () => setLoading(false);
-      MapActions.mapboxMap.once("style.load", done);
-      return () => MapActions.mapboxMap.off("style.load", done);
+      mapboxMap.once("style.load", done);
+      return () => mapboxMap.off("style.load", done);
     }
-  }, [loading, MapActions.mapboxMap]);
+  }, [loading, mapboxMap]);
 
   const updateStyle = React.useCallback(index => {
     setLoading(true);
