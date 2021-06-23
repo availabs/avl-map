@@ -6,13 +6,11 @@ import {
   useTheme,
   ColorBar,
   DummyLegendTools,
-  useLegendReducer
-} from "@availabs/avl-components"
-
-import {
+  useLegendReducer,
   useSidebarContext,
   Select
-} from 'modules/avl-components/src'
+} from "@availabs/avl-components"
+
 
 const LayerPanel = ({ layer, layersLoading, customTheme, ...rest }) => {
 
