@@ -1,11 +1,9 @@
 import React from "react"
-
 import mapboxgl from "mapbox-gl"
-
 import get from "lodash.get"
-import styled from "styled-components"
 
-import { useFalcor, useSetSize } from "@availabs/avl-components"
+import { useSetSize, useFalcor } from "@availabs/avl-components"
+// import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar"
 import LoadingLayer from "./components/LoadingLayer"
@@ -296,6 +294,7 @@ const AvlMap = props => {
     layers = EmptyArray,
     sidebar = EmptyObject,
     layerProps = EmptyObject,
+    mapControl = 'bottom-right'
     // singleLayer = false
   } = props;
 
@@ -531,6 +530,10 @@ const AvlMap = props => {
       style: mapStyles[styleIndex].style
     });
 
+    if (mapControl) {
+      map.addControl(new mapboxgl.NavigationControl(), mapControl);
+    }
+
     map.on("move", e => {
       dispatch({ type: "update-state", mapMoved: performance.now() });
     });
@@ -551,7 +554,6 @@ const AvlMap = props => {
       ...state.dynamicLayers
     ].filter(({ id }) => !state.initializedLayers.includes(id)).reverse()
       .reduce((promise, layer) => {
-
         dispatch({ type: "init-layer", layer });
 
         layer.dispatchUpdate = (layer, newState) => {
@@ -677,7 +679,7 @@ const AvlMap = props => {
   }, [state.activeLayers]);
 
   return (
-    <MapContainer ref={ ref } className="w-full h-full relative focus:outline-none">
+    <div ref={ ref } className="w-full h-full relative focus:outline-none">
 
       <div id={ id.current } className="w-full h-full relative"/>
 
@@ -693,7 +695,6 @@ const AvlMap = props => {
         activeLayers={ state.activeLayers }
         loadingLayers={ loadingLayers }
         MapActions={ AllMapActions }>
-
         <div className="absolute bottom-0">
           { loadingLayers.map(layer => (
               <LoadingLayer key={ layer.id } layer={ layer }/>
@@ -792,16 +793,7 @@ const AvlMap = props => {
 
       </div>
 
-    </MapContainer>
+    </div>
   )
 }
 export { AvlMap };
-
-const MapContainer = styled.div`
-  .mapboxgl-map canvas {
-    display: block;
-  }
-  .mapboxgl-map canvas:focus {
-    outline: none;
-  }
-`

@@ -5,7 +5,7 @@ import { useTheme } from "@availabs/avl-components"
 const DefaultHoverComp = ({ data, layer }) => {
   const theme = useTheme();
   return (
-    <div className={ `${ theme.bg } rounded relative px-1` }>
+    <div className={ `rounded relative px-1` }>
       { data.map((row, i) =>
           <div key={ i } className="flex">
             { row.map((d, ii) =>

@@ -13,10 +13,13 @@ const LoadingLayer = ({ layer, progress }) => {
       ` }
       style={ {
       } }>
-      <div className={ `${ theme.menuBg } p-1 rounded rounded-tr-full rounded-br-full` }>
-        <div className={ `${ theme.bg } p-1 rounded rounded-tr-full rounded-br-full flex` }>
-          <div className="flex-1 text-xl font-bold flex items-center">
-            { layer.name }
+      <div className={ `${ theme.menuBg } p-1 rounded-tr-full rounded-br-full` }>
+        <div className={ `${ theme.bg } p-1 rounded-tr-full rounded-br-full flex` }>
+          <div className="flex-1 text-lg font-medium flex items-center">
+            <div className='flex-1'>{ layer.name }</div>
+            <div className={`font-light px-2`}>
+              {layer.state.progress ? `${layer.state.progress}%` : '' }
+            </div>
           </div>
           <div className={ `${ theme.menuTextActive }` }>
             <ScalableLoading scale={ 0.35 } color="currentColor"/>
