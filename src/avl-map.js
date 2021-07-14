@@ -129,8 +129,8 @@ const Reducer = (state, action) => {
         activeLayers: state.activeLayers.filter(({ id }) => id !== payload.layerId)
       };
     case "hover-layer-move": {
-      const { data, layer, HoverComp, ...rest } = payload;
-      state.hoverData.data.set(layer.id, { data, HoverComp, layer });
+      const { data, layer, HoverComp, pinnable, ...rest } = payload;
+      state.hoverData.data.set(layer.id, { data, HoverComp, layer, pinnable });
       return {
         ...state,
         hoverData: {
@@ -149,30 +149,26 @@ const Reducer = (state, action) => {
         }
       }
     }
-    // case "update-hover":
-    //   return {
-    //     ...state,
-    //     hoverData: {
-    //       ...state.hoverData,
-    //       ...payload.hoverData
-    //     }
-    //   };
-    case "pin-hover-comp":
+    case "pin-hover-comp":{
       if (!state.hoverData.data.size) return state;
 
-      return {
-        ...state,
-        pinnedHoverComps: [
-          ...state.pinnedHoverComps,
-          { id: getUniqueId(),
-            HoverComps: [...state.hoverData.data.values()],
-            ...payload,
-            // marker: new mapboxgl.Marker()
-              // .setLngLat(payload.lngLat)
-              // .addTo(state.map)
-          }
-        ]
-      };
+      const newPinned = {
+        id: getUniqueId(),
+        HoverComps: [...state.hoverData.data.values().filter(({ pinnable }) => pinnable)],
+        ...payload
+      }
+      if (newPinned.HoverComps.length) {
+        return {
+          ...state,
+          pinnedHoverComps: [
+            ...state.pinnedHoverComps,
+            newPinned
+          ]
+        };
+      }
+      return state;
+    }
+
     case "remove-pinned":
       return {
         ...state,
@@ -670,7 +666,15 @@ const AvlMap = props => {
 
   const AllMapActions = React.useMemo(() => {
     return { ...MapActions, setMapStyle };
-  }, [MapActions, setMapStyle])
+  }, [MapActions, setMapStyle]);
+
+  const layerActions = React.useMemo(() => {
+    return state.activeLayers.reduce((a, c) => {
+      const actions = get(c, "mapActions", [])
+        .map(action => ({ action, layer: c }))
+      return [...a, ...actions];
+    }, []);
+  }, [state.activeLayers]);
 
   return (
     <MapContainer ref={ ref } className="w-full h-full relative focus:outline-none">
@@ -678,6 +682,7 @@ const AvlMap = props => {
       <div id={ id.current } className="w-full h-full relative"/>
 
       <Sidebar { ...DefaultSidebar } { ...sidebar }
+        togglePosition={ layerActions.length ? "middle" : sidebar.togglePosition }
         mapboxMap={ state.map }
         layerStates={ state.layerStates }
         sidebarTabIndex={ state.sidebarTabIndex }
@@ -697,12 +702,7 @@ const AvlMap = props => {
         </div>
 
         <div className="absolute top-0">
-          { state.activeLayers.reduce((a, c, i ) => {
-              const actions = get(c, "mapActions", [])
-                .map(action => ({ action, layer: c }))
-              return [...a, ...actions];
-            }, [])
-            .map(({ action, layer }, i) => (
+          { layerActions.map(({ action, layer }, i) => (
               <MapAction key={ `${ layer.id }-${ i }` }
                 layer={ layer } { ...action }
                 MapActions={ AllMapActions }

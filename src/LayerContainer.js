@@ -156,7 +156,8 @@ class LayerContainer {
     const callback = get(this, ["onHover", "callback"], DefaultCallback).bind(this),
       HoverComp = get(this, ["onHover", "HoverComp"], DefaultHoverComp),
       property = get(this, ["onHover", "property"], null),
-      filterFunc = get(this, ["onHover", "filterFunc"], null);
+      filterFunc = get(this, ["onHover", "filterFunc"], null),
+      pinnable = get(this, ["onHover", "pinnable"], true);
 
     const mousemove = (layerId, { point, features, lngLat }) => {
 
@@ -217,6 +218,7 @@ class LayerContainer {
           type: "hover-layer-move",
           HoverComp,
           layer: this,
+          pinnable,
           lngLat,
           data
         });

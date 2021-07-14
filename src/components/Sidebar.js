@@ -89,7 +89,7 @@ const SidebarTabs = {
   }
 }
 
-const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...rest }) => {
+const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, togglePosition = "middle", ...rest }) => {
 
   const Tabs = React.useMemo(() => {
     return tabs.map(tab => {
@@ -103,7 +103,9 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, ...
   const theme = useTheme();
 
   return (
-    <CollapsibleSidebar startOpen={ open }
+    <CollapsibleSidebar
+      togglePosition={ togglePosition }
+      startOpen={ open }
       placeBeside={ children }>
 
       <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
