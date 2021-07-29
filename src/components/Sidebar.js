@@ -90,7 +90,7 @@ const SidebarTabs = {
   }
 }
 
-const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, togglePosition = "middle", ...rest }) => {
+const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, togglePosition, showSidebar, ...rest }) => {
 
   const Tabs = React.useMemo(() => {
     return tabs.map(tab => {
@@ -106,46 +106,49 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, tog
   return (
     <CollapsibleSidebar
       togglePosition={ togglePosition }
-      startOpen={ open }
+      startOpen={ Boolean(open) && Boolean(showSidebar) }
+      showToggle={ showSidebar }
       placeBeside={ children }>
 
-      <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
-        { !title ? null :
-          <div className="text-xl font-bold ml-1">
-            { title }
-          </div>
-        }
-        <div className="flex">
-          { Tabs.map(({ icon }, i) => (
-              <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
-                className={ `
-                  p-1 rounded-t-lg mb-1 ${ i > 0 ? "ml-1" : "" }
-                  ${ theme.menuBg }
-                ` }>
-                <div className={ `
-                    w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
-                    ${ i === sidebarTabIndex ?
-                      `${ theme.bg } ${ theme.menuTextActive }` :
-                      `${ theme.menuBg} cursor-pointer`
-                    } hover:${ theme.menuTextActive }
-                    flex items-center justify-center
+      { !showSidebar ? null :
+        <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
+          { !title ? null :
+            <div className="text-xl font-bold ml-1">
+              { title }
+            </div>
+          }
+          <div className="mb-1">
+            { Tabs.map(({ icon }, i) => (
+                <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
+                  className={ `
+                    p-1 rounded-t-lg ${ i === 0 ? "" : "ml-1" }
+                    ${ theme.menuBg } inline-block
                   ` }>
-                    <span className={ `fa fa-lg ${ icon }` }/>
+                  <div className={ `
+                      w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
+                      ${ i === sidebarTabIndex ?
+                        `${ theme.bg } ${ theme.menuTextActive }` :
+                        `${ theme.menuBg} cursor-pointer`
+                      } hover:${ theme.menuTextActive }
+                      flex items-center justify-center
+                    ` }>
+                      <span className={ `fa fa-lg ${ icon }` }/>
+                    </div>
                   </div>
+                ))
+              }
+          </div>
+          <div>
+            { Tabs.map(({ Component }, i) => (
+                <div key={ i } className="relative z-10"
+                  style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
+                  <Component { ...rest } MapActions={ MapActions }/>
                 </div>
               ))
             }
+          </div>
         </div>
-        <div className='p-1'>
-          { Tabs.map(({ Component }, i) => (
-              <div key={ i } className="relative z-10"
-                style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
-                <Component { ...rest } MapActions={ MapActions }/>
-              </div>
-            ))
-          }
-        </div>
-      </div>
+      }
 
     </CollapsibleSidebar>
   )

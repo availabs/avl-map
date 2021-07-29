@@ -92,9 +92,7 @@ class LayerContainer {
         if (!this.isVisible) {
           this._setVisibilityNone(mapboxMap, layer.id);
         }
-        else {
-          this.layerVisibility[layer.id] = mapboxMap.getLayoutProperty(layer.id, "visibility");
-        }
+        this.layerVisibility[layer.id] = mapboxMap.getLayoutProperty(layer.id, "visibility");
       }
     });
     if (this.onHover) {
@@ -157,7 +155,8 @@ class LayerContainer {
       HoverComp = get(this, ["onHover", "HoverComp"], DefaultHoverComp),
       property = get(this, ["onHover", "property"], null),
       filterFunc = get(this, ["onHover", "filterFunc"], null),
-      pinnable = get(this, ["onHover", "pinnable"], true);
+      pinnable = get(this, ["onHover", "pinnable"], true),
+      sortOrder = get(this, ["onHover", "sortOrder"], Infinity);
 
     const mousemove = (layerId, { point, features, lngLat }) => {
 
@@ -180,6 +179,8 @@ class LayerContainer {
         });
       }
 
+      const featuresMap = new Map();
+
       if (property) {
         const properties = features.reduce((a, c) => {
           const prop = get(c, ["properties", property], null);
@@ -187,24 +188,29 @@ class LayerContainer {
             a[prop] = true;
           }
           return a;
-        }, {})
-        hoverFeatures(
-          mapboxMap.queryRenderedFeatures({
+        }, {});
+        mapboxMap.queryRenderedFeatures({
             layers: [layerId],
             filter: ["in", ["get", property], ["literal", Object.keys(properties)]]
           })
-        );
+          .forEach(feature => {
+            featuresMap.set(feature.id, feature);
+          })
       }
       if (filterFunc) {
         const filter = filterFunc.call(this, layerId, features, lngLat, point);
-        if (filter) {
-          hoverFeatures(
-            mapboxMap.queryRenderedFeatures({ layers: [layerId], filter })
-          );
+        if (hasValue(filter)) {
+          mapboxMap.queryRenderedFeatures({ layers: [layerId], filter })
+            .forEach(feature => {
+              featuresMap.set(feature.id, feature);
+            });
         }
       }
+      features.forEach(feature => {
+        featuresMap.set(feature.id, feature);
+      });
 
-      hoverFeatures(features);
+      hoverFeatures([...featuresMap.values()]);
 
       hoveredFeatures.forEach(value => {
         mapboxMap.setFeatureState(value, { hover: false });
@@ -219,6 +225,7 @@ class LayerContainer {
           HoverComp,
           layer: this,
           pinnable,
+          sortOrder,
           lngLat,
           data
         });
@@ -398,7 +405,7 @@ class LayerContainer {
 
   }
 
-  receiveProps(props, mapboxMap, falcor) {
+  receiveProps(props, mapboxMap, falcor, MapActions) {
 
   }
 

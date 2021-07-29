@@ -37,6 +37,12 @@ const DefaultMapOptions = {
   logoPosition: "bottom-right"
 }
 
+const DefaultSidebar = {
+  tabs: ["layers", "styles"],
+  title: "",
+  togglePosition: "top"
+}
+
 let idCounter = 0;
 const getUniqueId = () => `unique-id-${ ++idCounter }`;
 
@@ -71,6 +77,7 @@ const InitialState = {
   styleIndex: 0,
   sidebarTabIndex: 0,
   modalData: [],
+  prevLayerStates: {},
   layerStates: {}
 }
 const Reducer = (state, action) => {
@@ -119,6 +126,10 @@ const Reducer = (state, action) => {
         layerStates: {
           ...state.layerStates,
           [payload.layer.id]: payload.layer.state
+        },
+        prevLayerStates: {
+          ...state.prevLayerStates,
+          [payload.layer.id]: payload.layer.state
         }
       };
     case "deactivate-layer":
@@ -127,8 +138,8 @@ const Reducer = (state, action) => {
         activeLayers: state.activeLayers.filter(({ id }) => id !== payload.layerId)
       };
     case "hover-layer-move": {
-      const { data, layer, HoverComp, pinnable, ...rest } = payload;
-      state.hoverData.data.set(layer.id, { data, HoverComp, layer, pinnable });
+      const { data, layer, HoverComp, pinnable, sortOrder, ...rest } = payload;
+      state.hoverData.data.set(layer.id, { data, HoverComp, layer, pinnable, sortOrder });
       return {
         ...state,
         hoverData: {
@@ -152,7 +163,9 @@ const Reducer = (state, action) => {
 
       const newPinned = {
         id: getUniqueId(),
-        HoverComps: [...state.hoverData.data.values().filter(({ pinnable }) => pinnable)],
+        HoverComps: [...state.hoverData.data.values()]
+          .filter(({ pinnable }) => pinnable)
+          .sort((a, b) => a.sortOrder - b.sortOrder),
         ...payload
       }
       if (newPinned.HoverComps.length) {
@@ -241,6 +254,16 @@ const Reducer = (state, action) => {
         }
       }
     }
+    case "layer-updated": {
+      const { layer } = payload;
+      return {
+        ...state,
+        prevLayerStates: {
+          ...state.prevLayerStates,
+          [layer.id]: state.layerStates[layer.id]
+        }
+      }
+    }
     case "set-map-style":
     case "switch-tab":
     case "map-loaded":
@@ -256,11 +279,6 @@ const Reducer = (state, action) => {
 
 const EmptyArray = [];
 const EmptyObject = {};
-
-const DefaultSidebar = {
-  tabs: ["layers", "styles"],
-  title: ""
-}
 
 // const toolbarFuncRunner = args => {
 //   if (!args.length) return [];
@@ -294,9 +312,20 @@ const AvlMap = props => {
     layers = EmptyArray,
     sidebar = EmptyObject,
     layerProps = EmptyObject,
-    mapControl = 'bottom-right'
-    // singleLayer = false
+    navigationControl = 'bottom-right'
   } = props;
+
+  const sidebarProps = React.useMemo(() => {
+    if (typeof sidebar !== "object") {
+      return {
+        showSidebar: Boolean(sidebar)
+      }
+    }
+    return {
+      showSidebar: true,
+      ...sidebar
+    };
+  }, [sidebar]);
 
   const { falcor, falcorCache } = useFalcor();
 
@@ -328,6 +357,18 @@ const AvlMap = props => {
 
     Promise.resolve(layer.onFilterChange(filterName, value, prevValue))
       .then(() => layer.fetchData(falcor))
+      .then(() => layer.render(state.map, falcor))
+      .then(() => {
+        dispatch({ type: "loading-stop", layerId: layer.id });
+      });
+
+  }, [state.map, falcor]);
+
+  const fetchData = React.useCallback(layer => {
+
+    dispatch({ type: "loading-start", layerId: layer.id });
+
+    Promise.resolve(layer.fetchData(falcor))
       .then(() => layer.render(state.map, falcor))
       .then(() => {
         dispatch({ type: "loading-stop", layerId: layer.id });
@@ -473,6 +514,7 @@ const AvlMap = props => {
     showModal,
     closeModal,
     updateFilter,
+    fetchData,
     removePinnedHoverComp,
     addPinnedHoverComp,
     bringModalToFront,
@@ -481,10 +523,9 @@ const AvlMap = props => {
   }), [
     toggleVisibility,
     addLayer, removeLayer, addDynamicLayer, removeDynamicLayer,
-    updateLegend, setSidebarTab,
-    showModal, closeModal, updateFilter,
-    removePinnedHoverComp, addPinnedHoverComp,
-    bringModalToFront, projectLngLat, saveMapAsImage
+    updateLegend, setSidebarTab, fetchData, saveMapAsImage,
+    showModal, closeModal, updateFilter, bringModalToFront,
+    removePinnedHoverComp, addPinnedHoverComp, projectLngLat
   ]);
 
   const MapOptions = React.useRef({ ...DefaultMapOptions, ...mapOptions });
@@ -530,8 +571,8 @@ const AvlMap = props => {
       style: mapStyles[styleIndex].style
     });
 
-    if (mapControl) {
-      map.addControl(new mapboxgl.NavigationControl(), mapControl);
+    if (navigationControl) {
+      map.addControl(new mapboxgl.NavigationControl(), navigationControl);
     }
 
     map.on("move", e => {
@@ -627,7 +668,8 @@ const AvlMap = props => {
   }, [layers, state.dynamicLayers, state.layersLoading]);
 
   const { HoverComps, ...hoverData } = React.useMemo(() => {
-    const HoverComps = [...state.hoverData.data.values()];
+    const HoverComps = [...state.hoverData.data.values()]
+      .sort((a, b) => a.sortOrder - b.sortOrder);
     return { ...state.hoverData, show: Boolean(HoverComps.length), HoverComps };
   }, [state.hoverData]);
 
@@ -645,10 +687,25 @@ const AvlMap = props => {
 // SEND PROPS TO ACTIVE LAYERS
   React.useEffect(() => {
     state.activeLayers.forEach(layer => {
-      const props = get(layerProps, layer.id, { falcorCache });
+      const props = get(layerProps, layer.id, {});
       layer.receiveProps(props, state.map, falcor, MapActions);
     });
-  }, [state.map, falcor, falcorCache, state.activeLayers, layerProps, MapActions]);
+  }, [state.map, falcor, state.activeLayers, layerProps, MapActions]);
+
+// CHECK FOR LAYER STATE UPDATE
+  React.useEffect(() => {
+    state.activeLayers.forEach(layer => {
+      const layerState = get(state.layerStates, layer.id, {}),
+        prevLayerState = get(state.prevLayerStates, layer.id, {});
+      if (layerState !== prevLayerState) {
+        dispatch({
+          type: "layer-updated",
+          layer
+        });
+        fetchData(layer);
+      }
+    })
+  }, [state.layerStates, state.prevLayerStates, fetchData]);
 
   const ref = React.useRef(null),
     size = useSetSize(ref);
@@ -670,7 +727,7 @@ const AvlMap = props => {
     return { ...MapActions, setMapStyle };
   }, [MapActions, setMapStyle]);
 
-  const layerActions = React.useMemo(() => {
+  const mapActions = React.useMemo(() => {
     return state.activeLayers.reduce((a, c) => {
       const actions = get(c, "mapActions", [])
         .map(action => ({ action, layer: c }))
@@ -683,8 +740,8 @@ const AvlMap = props => {
 
       <div id={ id.current } className="w-full h-full relative"/>
 
-      <Sidebar { ...DefaultSidebar } { ...sidebar }
-        togglePosition={ layerActions.length ? "middle" : sidebar.togglePosition }
+      <Sidebar { ...DefaultSidebar } { ...sidebarProps }
+        togglePosition={ mapActions.length ? "middle" : sidebarProps.togglePosition }
         mapboxMap={ state.map }
         layerStates={ state.layerStates }
         sidebarTabIndex={ state.sidebarTabIndex }
@@ -695,15 +752,9 @@ const AvlMap = props => {
         activeLayers={ state.activeLayers }
         loadingLayers={ loadingLayers }
         MapActions={ AllMapActions }>
-        <div className="absolute bottom-0">
-          { loadingLayers.map(layer => (
-              <LoadingLayer key={ layer.id } layer={ layer }/>
-            ))
-          }
-        </div>
 
         <div className="absolute top-0">
-          { layerActions.map(({ action, layer }, i) => (
+          { mapActions.map(({ action, layer }, i) => (
               <MapAction key={ `${ layer.id }-${ i }` }
                 layer={ layer } { ...action }
                 MapActions={ AllMapActions }
@@ -713,6 +764,13 @@ const AvlMap = props => {
                 inactiveLayers={ inactiveLayers }
                 activeLayers={ state.activeLayers }
                 loadingLayers={ loadingLayers }/>
+            ))
+          }
+        </div>
+
+        <div className="absolute bottom-0">
+          { loadingLayers.map(layer => (
+              <LoadingLayer key={ layer.id } layer={ layer }/>
             ))
           }
         </div>
@@ -752,18 +810,15 @@ const AvlMap = props => {
               project={ projectLngLat }
               key={ id } id={ id }>
               { HoverComps.map(({ HoverComp, data, layer }, i) =>
-                  <div key={ layer.id }
-                    className={ `${ i > 0 ? "mt-1" : "" } relative` }>
-                    <HoverComp key={ layer.id } layer={ layer } data={ data }
-                      activeLayers={ state.activeLayers }
-                      layersLoading={ state.layersLoading }
-                      loadingLayers={ loadingLayers }
-                      inactiveLayers={ inactiveLayers }
-                      MapActions={ AllMapActions }
-                      mapboxMap={ state.map }
-                      layerStates={ state.layerStates }
-                      pinned={ true }/>
-                  </div>
+                  <HoverComp key={ layer.id } layer={ layer } data={ data }
+                    activeLayers={ state.activeLayers }
+                    layersLoading={ state.layersLoading }
+                    loadingLayers={ loadingLayers }
+                    inactiveLayers={ inactiveLayers }
+                    MapActions={ AllMapActions }
+                    mapboxMap={ state.map }
+                    layerStates={ state.layerStates }
+                    pinned={ true }/>
                 )
               }
             </PinnedHoverComp>
@@ -774,18 +829,15 @@ const AvlMap = props => {
           <HoverCompContainer { ...hoverData } { ...size }
             project={ projectLngLat }>
             { HoverComps.map(({ HoverComp, data, layer }, i) => (
-                <div key={ layer.id }
-                  className={ `${ i > 0 ? "mt-1" : "" } relative` }>
-                  <HoverComp layer={ layer } data={ data }
-                    activeLayers={ state.activeLayers }
-                    layersLoading={ state.layersLoading }
-                    loadingLayers={ loadingLayers }
-                    inactiveLayers={ inactiveLayers }
-                    MapActions={ AllMapActions }
-                    mapboxMap={ state.map }
-                    layerStates={ state.layerStates }
-                    pinned={ false }/>
-                </div>
+                <HoverComp key={ layer.id } layer={ layer } data={ data }
+                  activeLayers={ state.activeLayers }
+                  layersLoading={ state.layersLoading }
+                  loadingLayers={ loadingLayers }
+                  inactiveLayers={ inactiveLayers }
+                  MapActions={ AllMapActions }
+                  mapboxMap={ state.map }
+                  layerStates={ state.layerStates }
+                  pinned={ false }/>
               ))
             }
           </HoverCompContainer>

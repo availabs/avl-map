@@ -6,82 +6,72 @@ import { useTheme, Legend } from "@availabs/avl-components"
 
 import { Icon } from "./LayerPanel"
 
-const InfoBoxContainer = ({ activeLayers, width = 420, padding = 8, MapActions, ...props }) => {
+const InfoBoxContainer = ({ activeLayers, width = 320, padding = 8, MapActions, ...props }) => {
 
-  const [node, setNode] = React.useState();
-
-
-  const [legendLayer, infoBoxLayers, infoBoxWidth] = activeLayers.reduce((a, c) => {
+  const [legendLayers, infoBoxLayers, infoBoxWidth] = activeLayers.reduce((a, c) => {
       if (c.legend) {
-        a[0] = c;
+        const { show = true } = c.legend;
+        let bool = show;
+        if (typeof show === "function") {
+          bool = show(c);
+        }
+        if (bool) {
+          a[0].push(c);
+        }
       }
-      if (c.infoBoxes.reduce((aa, cc) => {
-            let show = Boolean(cc.show);
-            if (typeof cc.show === "function") {
-              show = cc.show(c);
-            }
-            return aa || show;
-          }, false)
-      ) {
-        a[1].push(c);
+      const shownInfoBoxes = c.infoBoxes.filter(({ show = true }) => {
+        let bool = show;
+        if (typeof show === "function") {
+          bool = show(c);
+        }
+        return bool;
+      });
+      if (shownInfoBoxes.length) {
+        a[1].push([c, shownInfoBoxes]);
         a[2] = Math.max(a[2],
           c.infoBoxes.reduce((aa, cc) => Math.max(aa, get(cc, "width", 0)), 0)
         );
       }
       return a;
-    }, [null, [], width]);
+    }, [[], [], width]);
 
   const theme = useTheme();
 
-
   return (
-    <div ref={ setNode }
-      className={ `
+    <div className={ `
         absolute right-0 top-0 bottom-0
         flex flex-col items-end z-30
         pointer-events-none
       ` }
       style={ { padding: `${ padding }px` } }>
 
-      { !legendLayer ? null :
-        legendLayer.legend.show ?
-        <LegendContainer
-          { ...legendLayer.legend }
-          MapActions={ MapActions } layer={ legendLayer }
-          padding={ padding } infoBoxWidth={ infoBoxWidth }/>
-        : null
+      { legendLayers.map(layer => (
+          <LegendContainer key={ layer.id } { ...layer.legend }
+            padding={ padding } infoBoxWidth={ infoBoxWidth }/>
+        ))
       }
 
       { !infoBoxLayers.length ? null :
         <div className={ `
-            ${ theme.sidebarBg } p-1
-            scrollbar-sm overflow-y-auto overflow-x-visible
+            ${ theme.sidebarBg } p-1 rounded
+            grid grid-cols-1 gap-1
             pointer-events-auto
           ` }
           style={ {
             width: `${ infoBoxWidth - padding * 2 }px`
           } }>
-          { infoBoxLayers.map((layer, i) =>
+          { infoBoxLayers.map(([layer, infoBoxes]) =>
               <div key={ layer.id }
                 className={ `
-                  ${ i === 0 ? "" : "mt-1" }
+                  grid grid-cols-1 gap-1
                   ${ theme.menuBg } p-1 rounded
                 ` }>
-                { layer.infoBoxes
-                    .filter(({ show }) => {
-                      let bool = Boolean(show);
-                      if (typeof show === "function") {
-                        bool = show(layer);
-                      }
-                      return bool;
-                    })
-                    .map((box, ii) =>
-                      <InfoBox key={ ii } { ...props } { ...box }
-                        index={ ii } layer={ layer }
-                        MapActions={ MapActions }
-                        activeLayers={ activeLayers }
-                        containerNode={ node }/>
-                    )
+                { infoBoxes.map((box, i) =>
+                    <InfoBox key={ i } { ...props } { ...box }
+                      layer={ layer }
+                      MapActions={ MapActions }
+                      activeLayers={ activeLayers }/>
+                  )
                 }
               </div>
             )
@@ -94,7 +84,7 @@ const InfoBoxContainer = ({ activeLayers, width = 420, padding = 8, MapActions, 
 }
 export default InfoBoxContainer;
 
-const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...props }) => {
+const InfoBox = ({ layer, Header, Component, MapActions, open = true, ...props }) => {
 
   const [isOpen, setOpen] = React.useState(open);
 
@@ -102,8 +92,7 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
 
   return (
     <div className={ `
-      ${ theme.accent1 } px-1 ${ isOpen ? "pb-1" : "" }
-      ${ index === 0 ? "" : "mt-1" }
+      ${ theme.bg } px-1 rounded
     ` }>
       { !Header ? <div className="pt-1"/> :
           <div className={ `
@@ -114,8 +103,7 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
               flex-1 ${ isOpen ? "opacity-100" : "opacity-50" } transition
             ` }>
               { typeof Header === "function" ?
-                <Header layer={ layer }
-                  MapActions={ MapActions }/> :
+                <Header layer={ layer }/> :
                 Header
               }
             </div>
@@ -126,15 +114,13 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
             </div>
         </div>
       }
-      { !Component || !isOpen ? null :
-        <div className={ `
-          ${ theme.accent1 } ${theme.menuText} p-1
-        ` }>
+      { !Component ? null :
+        <div className={ `${ isOpen ? "block" : "hidden" }` }>
           { typeof Component === "function" ?
-            <Component layer={ layer }
-              MapActions={ MapActions }
-              { ...props }/> :
-            Component
+              <Component layer={ layer } MapActions={ MapActions }
+                { ...props }/>
+            :
+              Component
           }
         </div>
       }
@@ -142,7 +128,7 @@ const InfoBox = ({ layer, Header, Component, index, MapActions, open = true, ...
   )
 }
 
-const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions, layer, ...props }) => {
+const LegendContainer = ({ infoBoxWidth, padding, width = 420, title, ...props }) => {
 
   const theme = useTheme();
 
@@ -154,15 +140,11 @@ const LegendContainer = ({ infoBoxWidth, padding, width = 420, Title, MapActions
       width: `${ Math.max(infoBoxWidth, width) - padding * 2 }px`,
       marginBottom: "-0.25rem"
     } }>
-      <div className={ `${ theme.menuBg } p-1 ` }>
-        <div className={ `${ theme.bg } px-3 pb-1` }>
-          { Title ?
-            <div className={`font-medium text-lg ${theme.menuText} py-1`}>
-              { typeof Title === "function" ?
-                <Title layer={ layer }
-                  MapActions={ MapActions }/> :
-                Title
-              }
+      <div className={ `${ theme.menuBg } p-1 rounded` }>
+        <div className={ `${ theme.bg } px-1 rounded` }>
+          { title ?
+            <div className="font-bold text-xl">
+              { title }
             </div> :
             <div className="pt-1"/>
           }

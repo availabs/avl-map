@@ -59,7 +59,7 @@ const RemoveButton = ({ orientation, children }) => {
   return (
     <div style={ {
         transform: orientation === "left" ?
-          "translate(-1rem, -1rem)" : "translate(1rem, -1rem)"
+          "translate(-0.75rem, -0.75rem)" : "translate(0.75rem, -0.75rem)"
       } }
       className={ `
         ${ theme.bg }
@@ -91,7 +91,8 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
         absolute top-0 left-0 z-20 inline-block
         rounded whitespace-nowrap hover-comp
         pointer-events-auto
-        p-1 rounded bg-npmrds-800
+        p-1 rounded ${ theme.sidebarBg }
+        grid grid-cols-1 gap-1
       ` }
       style={ {
         transform: getPinnedTranslate(pos, orientation.current),
@@ -99,11 +100,12 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
       } }>
 
       <div className={ `
-          absolute w-6 h-6 bg-npmrds-800 rounded-bl rounded-tr
+          absolute w-6 h-6 ${ theme.sidebarBg } rounded-bl rounded-tr
           ${ orientation.current === "left" ? "right-0" : "left-0" }
         ` }
         style={ style }/>
-      <div className={ `bg-npmrds-800 p-1 rounded relative z-20` }>
+
+        { children }
 
         <RemoveButton orientation={ orientation.current }>
           <Icon onClick={ e => remove(id) }>
@@ -111,10 +113,6 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
           </Icon>
         </RemoveButton>
 
-
-          { children }
-
-      </div>
     </div>
   )
 }
@@ -130,18 +128,17 @@ export const HoverCompContainer = ({ show, children, lngLat, project, ...rest })
         rounded whitespace-nowrap hover-comp
         pointer-events-none
         p-1 rounded ${ theme.sidebarBg }
+        grid grid-cols-1 gap-1
       ` }
       style={ {
-        display: show ? "inline-block" : "none",
+        display: show ? "grid" : "none",
         transform: getTranslate(pos, rest),
         boxShadow: "2px 2px 8px 0px rgba(0, 0, 0, 0.75)",
         // transition: "transform 0.15s ease-out"
       } }>
-      <div className={ `${ theme.menuBg } p-1 rounded relative z-20` }>
 
-        { children }
+      { children }
 
-      </div>
     </div>
   )
 }
