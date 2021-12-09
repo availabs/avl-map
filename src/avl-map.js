@@ -81,6 +81,7 @@ const InitialState = {
   modalData: [],
   prevLayerStates: {},
   layerStates: {},
+  prevLayerProps: {}
 };
 const Reducer = (state, action) => {
   const { type, ...payload } = action;
@@ -138,6 +139,14 @@ const Reducer = (state, action) => {
         activeLayers: state.activeLayers.filter(
           ({ id }) => id !== payload.layerId
         ),
+        layerStates: {
+          ...state.layerStates,
+          [payload.layerId]: {}
+        },
+        prevLayerStates: {
+          ...state.layerStates,
+          [payload.layerId]: {}
+        }
       };
     case "hover-layer-move": {
       const { data, layer, HoverComp, pinnable, sortOrder, ...rest } = payload;
@@ -260,15 +269,35 @@ const Reducer = (state, action) => {
         },
       };
     }
-    case "layer-updated": {
-      const { layer } = payload;
+    // case "layer-updated": {
+    //   const { layer } = payload;
+    //   return {
+    //     ...state,
+    //     prevLayerStates: {
+    //       ...state.prevLayerStates,
+    //       [layer.id]: state.layerStates[layer.id],
+    //     },
+    //   };
+    // }
+    case "update-prev": {
+      const { layerProps, updateProps, updateStates } = payload;
       return {
         ...state,
-        // prevLayerStates: {
-        //   ...state.prevLayerStates,
-        //   [layer.id]: state.layerStates[layer.id],
-        // },
-      };
+        prevLayerProps: {
+          ...state.prevLayerProps,
+          ...updateProps.reduce((a, c) => {
+            a[c.id] = get(layerProps, c.id, {});
+            return a;
+          }, {})
+        },
+        prevLayerStates: {
+          ...state.prevLayerStates,
+          ...updateStates.reduce((a, c) => {
+            a[c.id] = get(state.layerStates, c.id, {});
+            return a;
+          }, {})
+        }
+      }
     }
     case "set-map-style":
     case "switch-tab":
@@ -364,14 +393,16 @@ const AvlMap = (props) => {
         },
       };
 
-      Promise.resolve(layer.onFilterChange(filterName, value, prevValue))
-        .then(() => layer.fetchData(falcor))
-        .then(() => layer.render(state.map, falcor))
+      const props = get(layerProps, layer.id, {});
+
+      Promise.resolve(layer.onFilterChange(filterName, value, prevValue, props))
+        .then(() => layer.fetchData(falcor, props))
+        .then(() => layer.render(state.map, falcor, props))
         .then(() => {
           dispatch({ type: "loading-stop", layerId: layer.id });
         });
     },
-    [state.map, falcor]
+    [state.map, falcor, layerProps, state.layerStates]
   );
 
   const fetchData = React.useCallback(
@@ -384,7 +415,7 @@ const AvlMap = (props) => {
           dispatch({ type: "loading-stop", layerId: layer.id });
         });
     },
-    [state.map, falcor]
+    [state.map, falcor, layerProps]
   );
 
   const updateLegend = React.useCallback(
@@ -432,16 +463,15 @@ const AvlMap = (props) => {
   );
   const addLayer = React.useCallback(
     (layer) => {
-      layer
-        ._onAdd(state.map, falcor, updateHover)
-        .then(() => layer.render(state.map, falcor));
+      layer._onAdd(state.map, falcor, updateHover)
+        // .then(() => layer.render(state.map, falcor));
 
       dispatch({
         type: "activate-layer",
         layer,
       });
     },
-    [state.map, falcor, updateHover /*, singleLayer*/]
+    [state.map, falcor, updateHover]
   );
   const removeLayer = React.useCallback(
     (layer) => {
@@ -649,6 +679,8 @@ const AvlMap = (props) => {
           });
         };
 
+        layer.props = get(layerProps, layer.id, {});
+
         for (const filterName in layer.filters) {
           layer.filters[filterName].onChange = (v) =>
             updateFilter(layer, filterName, v);
@@ -664,22 +696,27 @@ const AvlMap = (props) => {
           action.actionFunc = action.action.bind(layer);
         });
 
-        dispatch({ type: "loading-start", layerId: layer.id });
+        // dispatch({ type: "loading-start", layerId: layer.id });
 
         return promise
           .then(() => layer._init(state.map, falcor, MapActions))
           .then(() => {
             if (layer.setActive) {
-              return layer
-                .fetchData(falcor)
-                .then(() => layer._onAdd(state.map, falcor, updateHover))
-                .then(() => layer.render(state.map, falcor))
-                .then(() => dispatch({ type: "activate-layer", layer }));
+              layer._onAdd(state.map, falcor, updateHover);
+              dispatch({ type: "activate-layer", layer });
             }
           })
-          .then(() => {
-            dispatch({ type: "loading-stop", layerId: layer.id });
-          });
+          //     const props = get(layerProps, layer.id, {});
+              // return layer
+          //       .fetchData(falcor, props)
+          //       .then(() => layer._onAdd(state.map, falcor, updateHover))
+          //       .then(() => layer.render(state.map, falcor, props))
+          //       .then(() => dispatch({ type: "activate-layer", layer }));
+            // }
+          // })
+          // .then(() => {
+          //   dispatch({ type: "loading-stop", layerId: layer.id });
+          // });
       }, Promise.resolve());
   }, [
     state.map,
@@ -690,6 +727,7 @@ const AvlMap = (props) => {
     updateFilter,
     updateHover,
     state.initializedLayers,
+    layerProps
   ]);
 
   const pinHoverComp = React.useCallback(
@@ -744,12 +782,15 @@ const AvlMap = (props) => {
   ]);
 
   // SEND PROPS TO ACTIVE LAYERS
-  React.useEffect(() => {
-    state.activeLayers.forEach((layer) => {
-      const props = get(layerProps, layer.id, {});
-      layer.receiveProps(props, state.map, falcor, MapActions);
-    });
-  }, [state.map, falcor, state.activeLayers, layerProps, MapActions]);
+  // React.useEffect(() => {
+  //   state.activeLayers.forEach((layer) => {
+  //     const props = get(layerProps, layer.id, {}),
+  //       prevProps = get(state.prevLayerProps, layer.id, {});
+  //     if (props) {
+  //       layer.receiveProps(props, state.map, falcor, MapActions);
+  //     }
+  //   });
+  // }, [state.map, falcor, state.activeLayers, layerProps, MapActions]);
 
   // CHECK FOR LAYER STATE UPDATE
   // React.useEffect(() => {
@@ -761,10 +802,61 @@ const AvlMap = (props) => {
   //         type: "layer-updated",
   //         layer,
   //       });
-  //       fetchData(layer);
+  //       layer.render(state.map, falcor)
   //     }
   //   });
-  // }, [state.layerStates, state.prevLayerStates, fetchData]);
+  // }, [state.layerStates, state.prevLayerStates, state.map, falcor]);
+
+  // CHECK FOR LAYE PROPS CHANGE OR LAYER STATE CHANGE
+  React.useEffect(() => {
+    const needsFetch = [],
+      needsRender = [];
+
+    state.activeLayers.forEach(layer => {
+
+      layer.props = get(layerProps, layer.id, {});
+
+      const props = get(layerProps, layer.id, null),
+        prevProps = get(state.prevLayerProps, layer.id, null);
+
+      if (props !== prevProps) {
+        needsFetch.push(layer);
+        return;
+      }
+
+      const layerState = get(state.layerStates, layer.id, null),
+        prevLayerState = get(state.prevLayerStates, layer.id, null);
+
+      if (layerState !== prevLayerState) {
+        needsRender.push(layer);
+      }
+
+    });
+
+    needsFetch.forEach(layer => {
+      fetchData(layer);
+    });
+    needsRender.forEach(layer => {
+      layer.render(state.map, falcor);
+    });
+
+    dispatch({
+      type: "update-prev",
+      layerProps,
+      updateProps: needsFetch,
+      updateStates: needsRender
+    });
+
+  }, [
+    state.activeLayers,
+    layerProps,
+    state.prevLayerProps,
+    state.layerStates,
+    state.prevLayerStates,
+    state.map,
+    falcor,
+    fetchData
+  ])
 
   const ref = React.useRef(null),
     size = useSetSize(ref);
@@ -927,3 +1019,10 @@ const AvlMap = (props) => {
   );
 };
 export { AvlMap };
+
+const useCheckLayerProps = (activeLayers, layerProps) => {
+  const prevLayerProps = React.useRef({});
+  React.useEffect(() => {
+
+  }, [activeLayers, layerProps])
+}

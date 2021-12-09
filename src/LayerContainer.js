@@ -23,6 +23,7 @@ const DefaultOptions = {
   toolbar: ["toggle-visibility"],
   legend: null,
   infoBoxes: [],
+  props: {},
   state: {},
   mapboxMap: null,
   onHover: false,
@@ -47,7 +48,7 @@ class LayerContainer {
     this.callbacks = [];
     this.hoveredFeatures = new Map();
 
-    this.dispatchUpdate = () => {};
+    this.dispatchStateUpdate = () => {};
 
     this.updateState = this.updateState.bind(this);
   }
@@ -72,7 +73,7 @@ class LayerContainer {
     else {
       this.state = { ...this.state, ...newState };
     }
-    this.dispatchUpdate(this, this.state);
+    this.dispatchStateUpdate(this, this.state);
   }
 
   _onAdd(mapboxMap, falcor, updateHover) {
@@ -405,9 +406,9 @@ class LayerContainer {
 
   }
 
-  receiveProps(props, mapboxMap, falcor, MapActions) {
-
-  }
+  // receiveProps(props, mapboxMap, falcor, MapActions) {
+  //
+  // }
 
   toggleVisibility(mapboxMap) {
     this.isVisible = !this.isVisible;
