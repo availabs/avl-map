@@ -318,6 +318,7 @@ const AvlMap = (props) => {
     sidebar = EmptyObject,
     layerProps = EmptyObject,
     navigationControl = "bottom-right",
+    showSidebar = true,
   } = props;
 
   const sidebarProps = React.useMemo(() => {
@@ -327,7 +328,7 @@ const AvlMap = (props) => {
       };
     }
     return {
-      showSidebar: true,
+      showSidebar: showSidebar,
       ...sidebar,
     };
   }, [sidebar]);
@@ -751,20 +752,20 @@ const AvlMap = (props) => {
     });
   }, [state.map, falcor, state.activeLayers, layerProps, MapActions]);
 
-  // CHECK FOR LAYER STATE UPDATE
-  // React.useEffect(() => {
-  //   state.activeLayers.forEach((layer) => {
-  //     const layerState = get(state.layerStates, layer.id, {}),
-  //       prevLayerState = get(state.prevLayerStates, layer.id, {});
-  //     if (layerState !== prevLayerState) {
-  //       dispatch({
-  //         type: "layer-updated",
-  //         layer,
-  //       });
-  //       fetchData(layer);
-  //     }
-  //   });
-  // }, [state.layerStates, state.prevLayerStates, fetchData]);
+  //CHECK FOR LAYER STATE UPDATE
+  React.useEffect(() => {
+    state.activeLayers.forEach((layer) => {
+      const layerState = get(state.layerStates, layer.id, {}),
+        prevLayerState = get(state.prevLayerStates, layer.id, {});
+      if (layerState !== prevLayerState) {
+        dispatch({
+          type: "layer-updated",
+          layer,
+        });
+        fetchData(layer);
+      }
+    });
+  }, [state.layerStates, state.prevLayerStates, fetchData]);
 
   const ref = React.useRef(null),
     size = useSetSize(ref);
