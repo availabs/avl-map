@@ -281,22 +281,30 @@ const Reducer = (state, action) => {
     // }
     case "update-prev": {
       const { layerProps, updateProps, updateStates } = payload;
-      return {
-        ...state,
-        prevLayerProps: {
+      let prevLayerProps = state.prevLayerProps;
+      if (updateProps.length) {
+        prevLayerProps = {
           ...state.prevLayerProps,
           ...updateProps.reduce((a, c) => {
             a[c.id] = get(layerProps, c.id, {});
             return a;
           }, {})
-        },
-        prevLayerStates: {
+        }
+      }
+      let prevLayerStates = state.prevLayerStates;
+      if (updateStates.length) {
+        prevLayerStates = {
           ...state.prevLayerStates,
           ...updateStates.reduce((a, c) => {
             a[c.id] = get(state.layerStates, c.id, {});
             return a;
           }, {})
         }
+      }
+      return {
+        ...state,
+        prevLayerProps,
+        prevLayerStates
       }
     }
     case "set-map-style":
@@ -702,8 +710,9 @@ const AvlMap = (props) => {
           .then(() => layer._init(state.map, falcor, MapActions))
           .then(() => {
             if (layer.setActive) {
-              layer._onAdd(state.map, falcor, updateHover);
-              dispatch({ type: "activate-layer", layer });
+              layer.fetchData(falcor)
+                .then(() => layer._onAdd(state.map, falcor, updateHover))
+                .then(() => dispatch({ type: "activate-layer", layer }));
             }
           })
           //     const props = get(layerProps, layer.id, {});
@@ -807,7 +816,7 @@ const AvlMap = (props) => {
   //   });
   // }, [state.layerStates, state.prevLayerStates, state.map, falcor]);
 
-  // CHECK FOR LAYE PROPS CHANGE OR LAYER STATE CHANGE
+  // CHECK FOR LAYER PROPS CHANGE OR LAYER STATE CHANGE
   React.useEffect(() => {
     const needsFetch = [],
       needsRender = [];
@@ -840,12 +849,14 @@ const AvlMap = (props) => {
       layer.render(state.map, falcor);
     });
 
-    dispatch({
-      type: "update-prev",
-      layerProps,
-      updateProps: needsFetch,
-      updateStates: needsRender
-    });
+    if (needsFetch.length || needsRender.length) {
+      dispatch({
+        type: "update-prev",
+        layerProps,
+        updateProps: needsFetch,
+        updateStates: needsRender
+      });
+    }
 
   }, [
     state.activeLayers,
