@@ -288,23 +288,16 @@ const Reducer = (state, action) => {
           ...updateProps.reduce((a, c) => {
             a[c.id] = get(layerProps, c.id, {});
             return a;
-<<<<<<< HEAD
           }, {})
         }
       }
       let prevLayerStates = state.prevLayerStates;
       if (updateStates.length) {
         prevLayerStates = {
-=======
-          }, {}),
-        },
-        prevLayerStates: {
->>>>>>> cd13410d1886013b4da904b916413979fd770110
           ...state.prevLayerStates,
           ...updateStates.reduce((a, c) => {
             a[c.id] = get(state.layerStates, c.id, {});
             return a;
-<<<<<<< HEAD
           }, {})
         }
       }
@@ -313,11 +306,6 @@ const Reducer = (state, action) => {
         prevLayerProps,
         prevLayerStates
       }
-=======
-          }, {}),
-        },
-      };
->>>>>>> cd13410d1886013b4da904b916413979fd770110
     }
     case "set-map-style":
     case "switch-tab":
@@ -859,7 +847,6 @@ const AvlMap = (props) => {
       layer.render(state.map, falcor);
     });
 
-<<<<<<< HEAD
     if (needsFetch.length || needsRender.length) {
       dispatch({
         type: "update-prev",
@@ -869,14 +856,6 @@ const AvlMap = (props) => {
       });
     }
 
-=======
-    dispatch({
-      type: "update-prev",
-      layerProps,
-      updateProps: needsFetch,
-      updateStates: needsRender,
-    });
->>>>>>> cd13410d1886013b4da904b916413979fd770110
   }, [
     state.activeLayers,
     layerProps,
