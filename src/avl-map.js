@@ -1,5 +1,6 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
+import 'mapbox-gl/dist/mapbox-gl.css';
 import get from "lodash.get";
 
 import { useSetSize, useFalcor } from "@availabs/avl-components";
@@ -36,7 +37,7 @@ const DefaultMapOptions = {
   // style: "mapbox://styles/am3081/cjqqukuqs29222sqwaabcjy29",
   styles: DefaultStyles,
   attributionControl: false,
-  logoPosition: "bottom-right",
+  logoPosition: "bottom-left",
 };
 
 const DefaultSidebar = {
@@ -391,7 +392,7 @@ const AvlMap = (props) => {
     (layer, update) => {
       if (!get(layer, "legend", null)) return;
 
-      console.log("update Legend", layer.legend, update);
+      //console.log("update Legend", layer.legend, update);
       layer.legend = {
         ...layer.legend,
         ...update,
@@ -432,14 +433,17 @@ const AvlMap = (props) => {
   );
   const addLayer = React.useCallback(
     (layer) => {
-      layer
-        ._onAdd(state.map, falcor, updateHover)
-        .then(() => layer.render(state.map, falcor));
+      console.log('addLAyer', layer.type, layer.setActive)
+        layer.setActive = true
+        layer
+          ._onAdd(state.map, falcor, updateHover)
+          .then(() => layer.render(state.map, falcor));
 
-      dispatch({
-        type: "activate-layer",
-        layer,
-      });
+        dispatch({
+          type: "activate-layer",
+          layer,
+        });
+      
     },
     [state.map, falcor, updateHover /*, singleLayer*/]
   );
@@ -654,6 +658,7 @@ const AvlMap = (props) => {
             updateFilter(layer, filterName, v);
         }
 
+        // console.log('testing layers', layer.name)
         layer.toolbar.forEach((tool) => {
           if (typeof tool.action === "function") {
             tool.actionFunc = tool.action.bind(layer);
@@ -670,6 +675,7 @@ const AvlMap = (props) => {
           .then(() => layer._init(state.map, falcor, MapActions))
           .then(() => {
             if (layer.setActive) {
+              console.log('layer active', layer.type)
               return layer
                 .fetchData(falcor)
                 .then(() => layer._onAdd(state.map, falcor, updateHover))
@@ -836,7 +842,9 @@ const AvlMap = (props) => {
         </div>
 
         <div className="absolute bottom-0">
-          {loadingLayers.map((layer) => (
+          {loadingLayers
+            .filter(l => l.setActive)
+            .map((layer) => (
             <LoadingLayer key={layer.id} layer={layer} />
           ))}
         </div>

@@ -168,7 +168,9 @@ const LegendContainer = ({
   ...props
 }) => {
   const theme = useTheme();
-
+  if(props.hide) {
+    return ''
+  }
   return (
     <div
       className={`
@@ -192,7 +194,7 @@ const LegendContainer = ({
           ) : (
             <div className="pt-1" />
           )}
-          <Legend {...props} />
+          {/*<Legend {...props} />*/}
         </div>
       </div>
     </div>

@@ -77,12 +77,12 @@ class LayerContainer {
 
   _onAdd(mapboxMap, falcor, updateHover) {
     this.sources.forEach(({ id, source }) => {
-      if (!mapboxMap.getSource(id)) {
+      if (mapboxMap && !mapboxMap.getSource(id)) {
         mapboxMap.addSource(id, source);
       }
     });
     this.layers.forEach(layer => {
-      if (!mapboxMap.getLayer(layer.id)) {
+      if (mapboxMap && !mapboxMap.getLayer(layer.id)) {
         if (layer.beneath && mapboxMap.getLayer(layer.beneath)) {
           mapboxMap.addLayer(layer, layer.beneath);
         }

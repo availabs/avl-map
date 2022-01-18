@@ -1,13 +1,15 @@
 import React from "react"
 
-import { Select, useTheme, CollapsibleSidebar } from "@availabs/avl-components"
+import { Select, useTheme,/*CollapsibleSidebar*/ } from "@availabs/avl-components"
+
+import { CollapsibleSidebar, useSidebarContext } from './CollapsibleSidebar'
 
 import LayerPanel from "./LayerPanel"
 
 const LayersTab = ({ inactiveLayers, activeLayers, MapActions, ...rest }) => {
 
   const theme = useTheme();
-
+  
   return (
     <>
       { !inactiveLayers.length ? null :
@@ -22,9 +24,9 @@ const LayersTab = ({ inactiveLayers, activeLayers, MapActions, ...rest }) => {
           </div>
         </div>
       }
-      { activeLayers.map(layer =>
+      { activeLayers.map((layer,i) =>
           <LayerPanel
-            key={ layer.id } { ...rest }
+            key={ i } { ...rest }
             layer={ layer } MapActions={ MapActions }/>
         )
       }
@@ -81,17 +83,50 @@ const StylesTab = ({ mapStyles, styleIndex, MapActions, mapboxMap }) => {
 
 const SidebarTabs = {
   layers: {
-    icon: "fa fa-layer-group",
+    icon: "fa fa-filter",
     Component: LayersTab
   },
   styles: {
-    icon: "fa fa-map",
+    icon: "fa fa-layer-group",
     Component: StylesTab
   }
 }
 
-const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, togglePosition, showSidebar, ...rest }) => {
+const Tab = ({i, icon, MapActions, sidebarTabIndex}) => {
+    const {open, doToggle} = useSidebarContext();
+    const theme = { ...useTheme() };
+    return (
+      <div key={ i } onClick={ e => {
+        //console.log('onclick', open, doToggle)
+        if((!open) || (open && i === sidebarTabIndex)  ) {
+          doToggle()
+        }
 
+        MapActions.setSidebarTab(i) 
+      }}
+        className={ `
+           rounded-t-lg 
+           inline-block
+        ` }>
+        <div className={ `
+            w-10 h-11 hover:text-yellow-600 text-xs
+            ${i === 0 ? 'rounded-tl-lg ' : '' }
+            ${ open && i === sidebarTabIndex ?
+              'bg-blue-500 text-white' :
+              ` cursor-pointer hover:bg-gray-200`
+            } 
+            flex items-center justify-center
+          ` }>
+            <span className={ `fa fa-lg ${ icon }` }/>
+          </div>
+          
+        </div>
+    )
+}
+
+const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, togglePosition, showSidebar, sidebarTabPosition, ...rest }) => {
+
+  const c = useSidebarContext();
   const Tabs = React.useMemo(() => {
     return tabs.map(tab => {
       if (tab in SidebarTabs) {
@@ -106,39 +141,28 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, tog
   return (
     <CollapsibleSidebar
       togglePosition={ togglePosition }
+      minWidth={'w-10'}
       startOpen={ Boolean(open) && Boolean(showSidebar) }
-      showToggle={ showSidebar }
+      showToggle={ false }
       placeBeside={ children }>
 
       { !showSidebar ? null :
-        <div className={ `p-1 h-full ${ theme.sidebarBg } rounded` }>
-          { !title ? null :
-            <div className="text-xl font-bold ml-1">
-              { title }
-            </div>
-          }
-          <div className="mb-1">
+        <div className={ `h-full overflow-hidden rounded flex ${sidebarTabPosition === 'top' ? 'flex-col' : '' }`}  style={{background: 'rgba(255,255,255, 0.5)'}}>
+          
+          <div className={`mb-1 rounded-t-lg flex ${sidebarTabPosition === 'top' ? '' : 'flex-col items-center'}`} style={{background: 'rgba(255,255,255, 0.7)'}}>
             { Tabs.map(({ icon }, i) => (
-                <div key={ i } onClick={ e => MapActions.setSidebarTab(i) }
-                  className={ `
-                    p-1 rounded-t-lg ${ i === 0 ? "" : "ml-1" }
-                    ${ theme.menuBg } inline-block
-                  ` }>
-                  <div className={ `
-                      w-10 h-9 hover:${ theme.bg } rounded-t-lg transition
-                      ${ i === sidebarTabIndex ?
-                        `${ theme.bg } ${ theme.menuTextActive }` :
-                        `${ theme.menuBg} cursor-pointer`
-                      } hover:${ theme.menuTextActive }
-                      flex items-center justify-center
-                    ` }>
-                      <span className={ `fa fa-lg ${ icon }` }/>
-                    </div>
-                  </div>
-                ))
-              }
+              <Tab icon={icon} key={i} i={i} MapActions={ MapActions } sidebarTabIndex={ sidebarTabIndex}/>)
+            )
+          }
           </div>
-          <div>
+
+          <div className='flex-1 p-2'>
+            { 
+              !title ? null :
+              <div className="text-xl font-bold ml-1">
+                { title }
+              </div>
+            }
             { Tabs.map(({ Component }, i) => (
                 <div key={ i } className="relative z-10"
                   style={ { display: i === sidebarTabIndex ? "block" : "none" } }>

@@ -3,13 +3,20 @@ import React from "react";
 import get from "lodash.get";
 
 import {
-  Select,
   useTheme,
   ColorBar,
-  useSidebarContext,
   DummyLegendTools,
   useLegendReducer,
 } from "@availabs/avl-components";
+
+import {
+  Select
+
+} from 'components/avl-components/src'
+
+import {
+  useSidebarContext,
+} from './CollapsibleSidebar'
 
 const LayerPanel = ({ layer, layersLoading, ...rest }) => {
   const [open, setOpen] = React.useState(true),
@@ -60,7 +67,7 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
       />
 
       <div style={{ display: open ? "block" : "none" }}>
-        {!layer.legend ? null : <LegendControls layer={layer} {...rest} />}
+       {/* {!layer.legend ? null : <LegendControls layer={layer} {...rest} />}*/}
         {filters}
       </div>
     </div>
