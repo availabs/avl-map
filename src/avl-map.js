@@ -679,7 +679,7 @@ const AvlMap = (props) => {
       .reduce((promise, layer) => {
         dispatch({ type: "init-layer", layer });
 
-        layer.dispatchUpdate = (layer, newState) => {
+        layer.dispatchStateUpdate = (layer, newState) => {
           dispatch({
             type: "layer-update",
             newState,
