@@ -164,7 +164,7 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, tog
               </div>
             }
             { Tabs.map(({ Component }, i) => (
-                <div key={ i } className="relative z-10"
+                <div key={ i } className="relative z-10 overflow-auto h-full scrollbar-sm"
                   style={ { display: i === sidebarTabIndex ? "block" : "none" } }>
                   <Component { ...rest } MapActions={ MapActions }/>
                 </div>
