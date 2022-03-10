@@ -435,15 +435,14 @@ const AvlMap = (props) => {
     (layer) => {
       console.log('addLAyer', layer.type, layer.setActive)
         layer.setActive = true
-        layer
+        return layer
           ._onAdd(state.map, falcor, updateHover)
-          .then(() => layer.render(state.map, falcor));
+          .then(() => layer.render(state.map, falcor))
+            .then(() => dispatch({
+              type: "activate-layer",
+              layer,
+            }));
 
-        dispatch({
-          type: "activate-layer",
-          layer,
-        });
-      
     },
     [state.map, falcor, updateHover /*, singleLayer*/]
   );
