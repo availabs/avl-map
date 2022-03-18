@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 
 import get from "lodash.get";
 
@@ -45,6 +45,7 @@ const InfoBoxContainer = ({
   );
 
   const theme = useTheme();
+  const [open, setOpen] = useState(true)
 
   return (
     <div
@@ -55,7 +56,17 @@ const InfoBoxContainer = ({
       `}
       style={{ padding: `${padding}px` }}
     >
-      {legendLayers.map((layer) => (
+
+      <div className="
+            w-10 h-11
+            bg-white
+             cursor-pointer pointer-events-auto
+            flex items-center justify-center
+          ">
+        <i className={`p-1 fa fa-chevron-${open ? 'up' : 'down'} cursor-pointer`} onClick={() => setOpen(!open)} />
+      </div>
+
+      {open && legendLayers.map((layer) => (
         <LegendContainer
           key={layer.id}
           {...layer.legend}
@@ -72,6 +83,7 @@ const InfoBoxContainer = ({
             ${theme.sidebarBg} p-1 rounded
             grid grid-cols-1 gap-1
             pointer-events-auto overflow-y-auto scrollbar-sm
+            ${open ? 'block' : 'hidden'}
           `}
           style={{
             width: `${infoBoxWidth - padding * 2}px`,
@@ -139,7 +151,7 @@ const InfoBox = ({
             {typeof Header === "function" ? <Header layer={layer} /> : Header}
           </div>
           <div className="text-base">
-            <Icon onClick={(e) => setOpen(!isOpen)}>
+            <Icon onClick={() => setOpen(!isOpen)}>
               <span className={`fa fa-${isOpen ? "minus" : "plus"}`} />
             </Icon>
           </div>
@@ -161,7 +173,7 @@ const InfoBox = ({
 const LegendContainer = ({
   infoBoxWidth,
   padding,
-  width = 420,
+  width = 250,
   Title,
   MapActions,
   layer,
@@ -174,7 +186,7 @@ const LegendContainer = ({
   return (
     <div
       className={`
-      ${theme.sidebarBg} p-1 rounded pointer-events-auto
+      ${theme.sidebarBg} p-1 rounded pointer-events-auto 
     `}
       style={{
         width: `${Math.max(infoBoxWidth, width) - padding * 2}px`,
@@ -192,7 +204,7 @@ const LegendContainer = ({
               )}
             </div>
           ) : (
-            <div className="pt-1" />
+            <div />
           )}
           {/*<Legend {...props} />*/}
         </div>
