@@ -4,15 +4,13 @@ import get from "lodash.get";
 
 import {
   useTheme,
+  Select,
   ColorBar,
   DummyLegendTools,
   useLegendReducer,
 } from "@availabs/avl-components";
 
-import {
-  Select
 
-} from 'components/avl-components/src'
 
 import {
   useSidebarContext,
