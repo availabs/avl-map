@@ -13,7 +13,7 @@ const InfoBoxContainer = ({
   MapActions,
   ...props
 }) => {
-  const [legendLayers, infoBoxLayers, infoBoxWidth] = activeLayers.reduce(
+  const [legendLayers, infoBoxLayers, infoBoxWidth, defaultZoomLayer] = activeLayers.reduce(
     (a, c) => {
       if (c.legend) {
         const { show = true } = c.legend;
@@ -39,9 +39,13 @@ const InfoBoxContainer = ({
           c.infoBoxes.reduce((aa, cc) => Math.max(aa, get(cc, "width", 0)), 0)
         );
       }
+
+      if(c.defaultZoom){
+        a[3] = c
+      }
       return a;
     },
-    [[], [], width]
+    [[], [], width, {}]
   );
 
   const theme = useTheme();
@@ -57,13 +61,27 @@ const InfoBoxContainer = ({
       style={{ padding: `${padding}px` }}
     >
 
-      <div className="
+      <div className={'flex'}>
+        <div className="
             w-10 h-11
             bg-white
              cursor-pointer pointer-events-auto
             flex items-center justify-center
           ">
-        <i className={`p-1 fa fa-chevron-${open ? 'up' : 'down'} cursor-pointer`} onClick={() => setOpen(!open)} />
+          <i className={`p-1 fa fa-home cursor-pointer`} onClick={() => {
+            defaultZoomLayer.mapboxMap.easeTo(defaultZoomLayer.defaultZoom)
+            console.log('zoom?', defaultZoomLayer)
+          }} />
+        </div>
+
+        <div className="
+            w-10 h-11
+            bg-white
+             cursor-pointer pointer-events-auto
+            flex items-center justify-center
+          ">
+          <i className={`p-1 fa fa-chevron-${open ? 'up' : 'down'} cursor-pointer`} onClick={() => setOpen(!open)} />
+        </div>
       </div>
 
       {open && legendLayers.map((layer) => (
