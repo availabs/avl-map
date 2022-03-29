@@ -70,7 +70,6 @@ const InfoBoxContainer = ({
           ">
           <i className={`p-1 fa fa-home cursor-pointer`} onClick={() => {
             defaultZoomLayer.mapboxMap.easeTo(defaultZoomLayer.defaultZoom)
-            console.log('zoom?', defaultZoomLayer)
           }} />
         </div>
 

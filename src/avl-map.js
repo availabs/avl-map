@@ -433,6 +433,7 @@ const AvlMap = (props) => {
   );
   const addLayer = React.useCallback(
     (layer) => {
+      dispatch({ type: "loading-start", layerId: layer.id });
       console.log('addLAyer', layer.type, layer.setActive)
         layer.setActive = true
         return layer
@@ -441,7 +442,8 @@ const AvlMap = (props) => {
             .then(() => dispatch({
               type: "activate-layer",
               layer,
-            }));
+            }))
+            .then(() =>  dispatch({ type: "loading-stop", layerId: layer.id }));
 
     },
     [state.map, falcor, updateHover /*, singleLayer*/]
