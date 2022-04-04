@@ -127,7 +127,7 @@ export const HoverCompContainer = ({ show, children, lngLat, project, ...rest })
         absolute top-0 left-0 z-20
         rounded whitespace-nowrap hover-comp
         pointer-events-none
-        p-1 rounded ${ theme.sidebarBg }
+        p-1 rounded ${ theme.sidebarBg || 'bg-white'}
         grid grid-cols-1 gap-1
       ` }
       style={ {
