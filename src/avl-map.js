@@ -1,8 +1,9 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
+
 import get from "lodash.get";
 
-import { useSetSize, useFalcor } from "@availabs/avl-components";
+import { useSetSize, useFalcor } from "modules/avl-components/src";
 // import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar";
@@ -14,6 +15,8 @@ import {
 import InfoBoxes from "./components/InfoBoxContainer";
 import DraggableModal from "./components/DraggableModal";
 import MapAction from "./components/MapAction";
+
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 export const DefaultStyles = [
   { name: "Dark", style: "mapbox://styles/am3081/ckm85o7hq6d8817nr0y6ute5v" },
@@ -36,7 +39,7 @@ const DefaultMapOptions = {
   // style: "mapbox://styles/am3081/cjqqukuqs29222sqwaabcjy29",
   styles: DefaultStyles,
   attributionControl: false,
-  logoPosition: "bottom-right",
+  logoPosition: "bottom-left",
 };
 
 const DefaultSidebar = {
@@ -936,11 +939,11 @@ const AvlMap = (props) => {
           ))}
         </div>
 
-        <div className="absolute bottom-0">
+        {/*<div className="absolute bottom-0">
           {loadingLayers.map((layer) => (
             <LoadingLayer key={layer.id} layer={layer} />
           ))}
-        </div>
+        </div>*/}
       </Sidebar>
 
       <InfoBoxes

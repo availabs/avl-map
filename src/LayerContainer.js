@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl"
 
-import { hasValue } from "@availabs/avl-components"
+import { hasValue } from "modules/avl-components/src"
 
 import DefaultHoverComp from "./components/DefaultHoverComp"
 
