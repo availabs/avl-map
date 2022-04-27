@@ -166,6 +166,7 @@ class LayerContainer {
 
       const hoverFeatures = features => {
         features.forEach(({ id, source, sourceLayer }) => {
+
           if ((id === undefined) || (id === null)) return;
 
           if (hoveredFeatures.has(id)) {

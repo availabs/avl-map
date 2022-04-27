@@ -51,6 +51,8 @@ const DefaultSidebar = {
 let idCounter = 0;
 const getUniqueId = () => `unique-id-${++idCounter}`;
 
+const noRefBox = () => ({ width: 0, height: 0 });
+
 const DefaultStaticOptions = {
   size: [80, 50],
   center: [-74.180647, 42.58],
@@ -900,6 +902,20 @@ const AvlMap = (props) => {
       return [...a, ...actions];
     }, []);
   }, [state.activeLayers]);
+
+  const getRect = React.useCallback(() => {
+    if (ref.current) {
+      return ref.current.getBoundingClientRect();
+    }
+    return { width: 0, height: 0 };
+  }, [ref.current]);
+
+  const { width, height } = getRect();
+  React.useEffect(() => {
+    if (state.map) {
+      state.map.resize();
+    }
+  }, [width, height, state.map]);
 
   return (
     <div ref={ref} className="w-full h-full relative focus:outline-none">
