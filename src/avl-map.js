@@ -360,6 +360,7 @@ const AvlMap = (props) => {
     sidebar = EmptyObject,
     layerProps = EmptyObject,
     navigationControl = "bottom-right",
+    CustomSidebar = null
   } = props;
 
   const sidebarProps = React.useMemo(() => {
@@ -921,6 +922,20 @@ const AvlMap = (props) => {
     <div ref={ref} className="w-full h-full relative focus:outline-none">
       <div id={id.current} className="w-full h-full relative" />
 
+      {CustomSidebar ?
+        <CustomSidebar
+          mapboxMap={state.map}
+          layerStates={state.layerStates}
+          sidebarTabIndex={state.sidebarTabIndex}
+          mapStyles={state.mapStyles}
+          styleIndex={state.styleIndex}
+          layersLoading={state.layersLoading}
+          inactiveLayers={inactiveLayers}
+          activeLayers={state.activeLayers}
+          loadingLayers={loadingLayers}
+          MapActions={AllMapActions}
+        />
+      :
       <Sidebar
         {...DefaultSidebar}
         {...sidebarProps}
@@ -954,14 +969,8 @@ const AvlMap = (props) => {
             />
           ))}
         </div>
-
-        {/*<div className="absolute bottom-0">
-          {loadingLayers.map((layer) => (
-            <LoadingLayer key={layer.id} layer={layer} />
-          ))}
-        </div>*/}
       </Sidebar>
-
+      }
       <InfoBoxes
         activeLayers={state.activeLayers}
         layersLoading={state.layersLoading}
