@@ -156,7 +156,7 @@ const Sidebar = ({ open, sidebarTabIndex, MapActions, tabs, title, children, tog
           }
           </div>
 
-          <div className='flex-1 p-2'>
+          <div className='flex-1 p-2 overflow-x-scroll'>
             { 
               !title ? null :
               <div className="text-xl font-bold ml-1">
