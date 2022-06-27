@@ -385,16 +385,16 @@ class LayerContainer {
         element.removeEventListener(action, callback);
       }
       else if (layerId) {
-        mapboxMap.off(action, layerId, callback);
+        this.mapboxMap.off(action, layerId, callback);
       }
       else {
-        mapboxMap.off(action, callback);
+        this.mapboxMap.off(action, callback);
       }
     }
     this.layers.forEach(({ id }) => {
-      mapboxMap.removeLayer(id);
+      this.mapboxMap.removeLayer(id);
     });
-    this.onRemove(mapboxMap);
+    this.onRemove(this.mapboxMap);
   }
   onRemove(mapboxMap) {
 
