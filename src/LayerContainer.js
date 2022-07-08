@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl"
 
-import { hasValue } from "@availabs/avl-components"
+import { hasValue } from "modules/avl-components/src"
 
 import DefaultHoverComp from "./components/DefaultHoverComp"
 
@@ -166,6 +166,7 @@ class LayerContainer {
 
       const hoverFeatures = features => {
         features.forEach(({ id, source, sourceLayer }) => {
+
           if ((id === undefined) || (id === null)) return;
 
           if (hoveredFeatures.has(id)) {
@@ -384,16 +385,16 @@ class LayerContainer {
         element.removeEventListener(action, callback);
       }
       else if (layerId) {
-        mapboxMap.off(action, layerId, callback);
+        this.mapboxMap.off(action, layerId, callback);
       }
       else {
-        mapboxMap.off(action, callback);
+        this.mapboxMap.off(action, callback);
       }
     }
     this.layers.forEach(({ id }) => {
-      mapboxMap.removeLayer(id);
+      this.mapboxMap.removeLayer(id);
     });
-    this.onRemove(mapboxMap);
+    this.onRemove(this.mapboxMap);
   }
   onRemove(mapboxMap) {
 

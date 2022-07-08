@@ -1,8 +1,9 @@
 import React from "react";
 import mapboxgl from "mapbox-gl";
+
 import get from "lodash.get";
 
-import { useSetSize, useFalcor } from "@availabs/avl-components";
+import { useSetSize, useFalcor } from "modules/avl-components/src";
 // import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar";
@@ -14,6 +15,8 @@ import {
 import InfoBoxes from "./components/InfoBoxContainer";
 import DraggableModal from "./components/DraggableModal";
 import MapAction from "./components/MapAction";
+
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 export const DefaultStyles = [
   { name: "Dark", style: "mapbox://styles/am3081/ckm85o7hq6d8817nr0y6ute5v" },
@@ -36,7 +39,7 @@ const DefaultMapOptions = {
   // style: "mapbox://styles/am3081/cjqqukuqs29222sqwaabcjy29",
   styles: DefaultStyles,
   attributionControl: false,
-  logoPosition: "bottom-right",
+  logoPosition: "bottom-left",
 };
 
 const DefaultSidebar = {
@@ -47,6 +50,8 @@ const DefaultSidebar = {
 
 let idCounter = 0;
 const getUniqueId = () => `unique-id-${++idCounter}`;
+
+const noRefBox = () => ({ width: 0, height: 0 });
 
 const DefaultStaticOptions = {
   size: [80, 50],
@@ -355,6 +360,7 @@ const AvlMap = (props) => {
     sidebar = EmptyObject,
     layerProps = EmptyObject,
     navigationControl = "bottom-right",
+    CustomSidebar = null
   } = props;
 
   const sidebarProps = React.useMemo(() => {
@@ -898,10 +904,38 @@ const AvlMap = (props) => {
     }, []);
   }, [state.activeLayers]);
 
+  const getRect = React.useCallback(() => {
+    if (ref.current) {
+      return ref.current.getBoundingClientRect();
+    }
+    return { width: 0, height: 0 };
+  }, [ref.current]);
+
+  const { width, height } = getRect();
+  React.useEffect(() => {
+    if (state.map) {
+      state.map.resize();
+    }
+  }, [width, height, state.map]);
+
   return (
     <div ref={ref} className="w-full h-full relative focus:outline-none">
       <div id={id.current} className="w-full h-full relative" />
 
+      {CustomSidebar ?
+        <CustomSidebar
+          mapboxMap={state.map}
+          layerStates={state.layerStates}
+          sidebarTabIndex={state.sidebarTabIndex}
+          mapStyles={state.mapStyles}
+          styleIndex={state.styleIndex}
+          layersLoading={state.layersLoading}
+          inactiveLayers={inactiveLayers}
+          activeLayers={state.activeLayers}
+          loadingLayers={loadingLayers}
+          MapActions={AllMapActions}
+        />
+      :
       <Sidebar
         {...DefaultSidebar}
         {...sidebarProps}
@@ -935,14 +969,8 @@ const AvlMap = (props) => {
             />
           ))}
         </div>
-
-        <div className="absolute bottom-0">
-          {loadingLayers.map((layer) => (
-            <LoadingLayer key={layer.id} layer={layer} />
-          ))}
-        </div>
       </Sidebar>
-
+      }
       <InfoBoxes
         activeLayers={state.activeLayers}
         layersLoading={state.layersLoading}
