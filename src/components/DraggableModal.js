@@ -11,6 +11,8 @@ const DraggableModal = ({ Header,
                           layersLoading,
                           loadingLayers,
                           inactiveLayers,
+                          mapboxMap,
+                          layerStates,
                           ...props }) => {
 
   const theme = useTheme();
@@ -43,7 +45,9 @@ const DraggableModal = ({ Header,
                 activeLayers={ activeLayers }
                 layersLoading={ layersLoading }
                 loadingLayers={ loadingLayers }
-                inactiveLayers={ inactiveLayers }/>
+                inactiveLayers={ inactiveLayers }
+                mapboxMap={ mapboxMap }
+                layerStates={ layerStates }/>
             }
           </div>
         </div>

@@ -677,7 +677,6 @@ const AvlMap = (props) => {
       .filter(({ id }) => !state.initializedLayers.includes(id))
       .reverse()
       .reduce((promise, layer) => {
-        dispatch({ type: "init-layer", layer });
 
         layer.dispatchStateUpdate = (layer, newState) => {
           dispatch({
@@ -708,6 +707,7 @@ const AvlMap = (props) => {
 
         return promise
           .then(() => layer._init(state.map, falcor, MapActions))
+          .then(() => dispatch({ type: "init-layer", layer }))
           .then(() => {
             if (layer.setActive) {
               layer.fetchData(falcor)
