@@ -3,8 +3,8 @@ import mapboxgl from "mapbox-gl";
 
 import get from "lodash.get";
 
-import { useSetSize, useFalcor } from "modules/avl-components/src";
-// import {  } from 'modules/avl-components/src'
+import { useSetSize, useFalcor } from "@availabs/avl-components";
+// import {  } from '@availabs/avl-components'
 
 import Sidebar from "./components/Sidebar";
 import LoadingLayer from "./components/LoadingLayer";
@@ -968,6 +968,12 @@ const AvlMap = (props) => {
               loadingLayers={loadingLayers}
             />
           ))}
+        </div>
+        <div className="absolute bottom-0">
+          { loadingLayers.map((layer) => (
+              <LoadingLayer key={layer.id} layer={layer} />
+            ))
+          }
         </div>
       </Sidebar>
       }

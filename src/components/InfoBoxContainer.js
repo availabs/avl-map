@@ -2,7 +2,7 @@ import React from "react";
 
 import get from "lodash.get";
 
-import { useTheme, Legend } from "modules/avl-components/src";
+import { useTheme, Legend } from "@availabs/avl-components";
 
 import { Icon } from "./LayerPanel";
 
