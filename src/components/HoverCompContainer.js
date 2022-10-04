@@ -118,8 +118,7 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
 }
 
 export const HoverCompContainer = ({ show, children, lngLat, project, ...rest }) => {
-  const theme = useTheme();
-
+  
   const pos = project(lngLat);
 
   return (
