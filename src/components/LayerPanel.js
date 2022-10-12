@@ -8,7 +8,7 @@ import {
   ColorBar,
   DummyLegendTools,
   useLegendReducer,
-} from "@availabs/avl-components";
+} from "components/avl-components/src";
 
 
 

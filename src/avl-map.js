@@ -3,7 +3,7 @@ import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import get from "lodash.get";
 
-import { useSetSize, useFalcor } from "@availabs/avl-components";
+import { useSetSize, useFalcor } from "components/avl-components/src";
 // import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar";
