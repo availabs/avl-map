@@ -3,8 +3,8 @@ import mapboxgl from "mapbox-gl";
 
 import get from "lodash.get";
 
-import { useSetSize, useFalcor } from "@availabs/avl-components";
-// import {  } from '@availabs/avl-components'
+import { useSetSize, useFalcor } from "modules/avl-components/src";
+// import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar";
 import LoadingLayer from "./components/LoadingLayer";
@@ -94,15 +94,7 @@ const Reducer = (state, action) => {
     case "init-layer":
       return {
         ...state,
-        initializedLayers: [...state.initializedLayers, payload.layer.id],
-        // activeLayers: [
-        //   payload.layer.id,
-        //   ...state.activeLayers
-        // ],
-        // layerStates: {
-        //   ...state.layerStates,
-        //   [payload.layer.id]: payload.layer.state
-        // }
+        initializedLayers: [...state.initializedLayers, payload.layer.id]
       };
     case "loading-start":
       return {
@@ -429,7 +421,7 @@ const AvlMap = (props) => {
           dispatch({ type: "loading-stop", layerId: layer.id });
         });
     },
-    [state.map, falcor, layerProps]
+    [state.map, falcor]
   );
 
   const updateLegend = React.useCallback(
@@ -558,16 +550,35 @@ const AvlMap = (props) => {
 
   const setMapStyle = React.useCallback(
     (styleIndex) => {
+
+      const geojsonSources = state.activeLayers.reduce((a, c) => {
+        c.sources.forEach(({ id, source: { type } }) => {
+          if (type === "geojson") {
+            a.push(id);
+          }
+        });
+        return a;
+      }, []);
+
+      const geojsonData = geojsonSources.reduce((a, c) => {
+        const source = state.map.getSource(c);
+        if (source) {
+          a[c] = source._data;
+        }
+        return a;
+      }, {});
+
       state.map.once("style.load", (e) => {
         state.activeLayers
           .slice()
           .reverse()
           .reduce((promise, layer) => {
             return promise.then(() =>
-              layer.onMapStyleChange(state.map, falcor, updateHover)
+              layer.onMapStyleChange(state.map, falcor, updateHover, geojsonData)
             );
           }, Promise.resolve());
       });
+
       state.activeLayers.forEach((layer) => {
         layer._onRemove(state.map);
       });
@@ -675,14 +686,18 @@ const AvlMap = (props) => {
     return () => map.remove();
   }, [accessToken]);
 
+  const initializingLayers = React.useRef([]);
+
   // INITIALIZE LAYERS
   React.useEffect(() => {
     if (!state.map) return;
 
     [...layers, ...state.dynamicLayers]
-      .filter(({ id }) => !state.initializedLayers.includes(id))
+      .filter(({ id }) => !initializingLayers.current.includes(id))
       .reverse()
       .reduce((promise, layer) => {
+
+        initializingLayers.current.push(layer.id);
 
         layer.dispatchStateUpdate = (layer, newState) => {
           dispatch({
@@ -709,8 +724,6 @@ const AvlMap = (props) => {
           action.actionFunc = action.action.bind(layer);
         });
 
-        // dispatch({ type: "loading-start", layerId: layer.id });
-
         return promise
           .then(() => layer._init(state.map, falcor, MapActions))
           .then(() => dispatch({ type: "init-layer", layer }))
@@ -721,17 +734,6 @@ const AvlMap = (props) => {
                 .then(() => dispatch({ type: "activate-layer", layer }));
             }
           });
-        //     const props = get(layerProps, layer.id, {});
-        // return layer
-        //       .fetchData(falcor, props)
-        //       .then(() => layer._onAdd(state.map, falcor, updateHover))
-        //       .then(() => layer.render(state.map, falcor, props))
-        //       .then(() => dispatch({ type: "activate-layer", layer }));
-        // }
-        // })
-        // .then(() => {
-        //   dispatch({ type: "loading-stop", layerId: layer.id });
-        // });
       }, Promise.resolve());
   }, [
     state.map,
@@ -741,7 +743,7 @@ const AvlMap = (props) => {
     MapActions,
     updateFilter,
     updateHover,
-    state.initializedLayers,
+    // state.initializedLayers,
     layerProps,
   ]);
 

@@ -1,6 +1,6 @@
 import React from "react"
 
-import { useTheme, Draggable } from "@availabs/avl-components"
+import { useTheme, Draggable } from "modules/avl-components/src"
 
 const DraggableModal = ({ Header,
                           Component,

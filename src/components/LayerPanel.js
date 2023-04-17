@@ -9,7 +9,7 @@ import {
   useSidebarContext,
   DummyLegendTools,
   useLegendReducer,
-} from "@availabs/avl-components";
+} from "modules/avl-components/src";
 
 const LayerPanel = ({ layer, layersLoading, ...rest }) => {
   const [open, setOpen] = React.useState(true),

@@ -1,6 +1,6 @@
 import React from "react"
 
-import { useTheme } from "@availabs/avl-components"
+import { useTheme } from "modules/avl-components/src"
 
 const MapAction = ({ icon, tooltip, actionFunc,
                       MapActions, layer,
@@ -13,7 +13,7 @@ const MapAction = ({ icon, tooltip, actionFunc,
             ${ theme.bg } hover:${ theme.accent1 }
             ${ theme.menuText } ${ theme.menuTextHover }
             w-10 h-10 rounded-2xl cursor-pointer text-lg
-            flex items-center justify-center
+            flex items-center justify-center text-black
           ` }
           onClick={ e => actionFunc(MapActions, layer, rest) }>
           <span className={ `fa ${ icon }` }/>

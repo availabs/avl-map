@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl"
 
-import { hasValue } from "@availabs/avl-components"
+import { hasValue } from "modules/avl-components/src"
 
 import DefaultHoverComp from "./components/DefaultHoverComp"
 
@@ -28,7 +28,8 @@ const DefaultOptions = {
   mapboxMap: null,
   onHover: false,
   onClick: false,
-  onBoxSelect: false
+  onBoxSelect: false,
+  selection: []
 }
 
 class LayerContainer {
@@ -93,7 +94,7 @@ class LayerContainer {
         if (!this.isVisible) {
           this._setVisibilityNone(mapboxMap, layer.id);
         }
-        this.layerVisibility[layer.id] = mapboxMap.getLayoutProperty(layer.id, "visibility");
+        this.layerVisibility[layer.id] = mapboxMap.getLayoutProperty(layer.id, "visibility") || "visible";
       }
     });
     if (this.onHover) {
@@ -103,10 +104,6 @@ class LayerContainer {
       this.addClick(mapboxMap);
     }
     if (this.onBoxSelect) {
-      this.state = {
-        ...this.state,
-        selection: []
-      };
       this.addBoxSelect(mapboxMap);
     }
     return this.onAdd(mapboxMap, falcor);
@@ -448,8 +445,13 @@ class LayerContainer {
 
   }
 
-  onMapStyleChange(mapboxMap, falcor, updateHover) {
+  onMapStyleChange(mapboxMap, falcor, updateHover, geojsonData) {
     this._onAdd(mapboxMap, falcor, updateHover)
+      .then(() => {
+        for (const id in geojsonData) {
+          mapboxMap.getSource(id).setData(geojsonData[id]);
+        }
+      })
       .then(() => this.render(mapboxMap, falcor))
   }
 }

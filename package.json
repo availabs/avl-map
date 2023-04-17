@@ -61,7 +61,7 @@
     "tailwindcss": "2.x"
   },
   "dependencies": {
-    "@availabs/avl-components": "^1.0.38",
+    "modules/avl-components/src": "^1.0.38",
     "mapbox-gl": "^2.1.1"
   }
 }
