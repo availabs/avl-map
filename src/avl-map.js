@@ -7,7 +7,6 @@ import { useSetSize, useFalcor } from "modules/avl-components/src";
 // import {  } from 'modules/avl-components/src'
 
 import Sidebar from "./components/Sidebar";
-import LoadingLayer from "./components/LoadingLayer";
 import {
   HoverCompContainer,
   PinnedHoverComp,
@@ -51,7 +50,7 @@ const DefaultSidebar = {
 let idCounter = 0;
 const getUniqueId = () => `unique-id-${++idCounter}`;
 
-const noRefBox = () => ({ width: 0, height: 0 });
+// const noRefBox = () => ({ width: 0, height: 0 });
 
 const DefaultStaticOptions = {
   size: [80, 50],
@@ -367,7 +366,7 @@ const AvlMap = (props) => {
     };
   }, [sidebar]);
 
-  const { falcor, falcorCache } = useFalcor();
+  const { falcor } = useFalcor();
 
   const [state, dispatch] = React.useReducer(Reducer, InitialState);
 
@@ -408,7 +407,7 @@ const AvlMap = (props) => {
           dispatch({ type: "loading-stop", layerId: layer.id });
         });
     },
-    [state.map, falcor, layerProps, state.layerStates]
+    [state.map, falcor, layerProps]
   );
 
   const fetchData = React.useCallback(
@@ -684,7 +683,7 @@ const AvlMap = (props) => {
     });
 
     return () => map.remove();
-  }, [accessToken]);
+  }, [accessToken,navigationControl]);
 
   const initializingLayers = React.useRef([]);
 
@@ -696,6 +695,7 @@ const AvlMap = (props) => {
       .filter(({ id }) => !initializingLayers.current.includes(id))
       .reverse()
       .reduce((promise, layer) => {
+        dispatch({ type: "init-layer", layer });
 
         initializingLayers.current.push(layer.id);
 
@@ -726,7 +726,6 @@ const AvlMap = (props) => {
 
         return promise
           .then(() => layer._init(state.map, falcor, MapActions))
-          .then(() => dispatch({ type: "init-layer", layer }))
           .then(() => {
             if (layer.setActive) {
               layer.fetchData(falcor)
@@ -911,7 +910,7 @@ const AvlMap = (props) => {
       return ref.current.getBoundingClientRect();
     }
     return { width: 0, height: 0 };
-  }, [ref.current]);
+  }, []);
 
   const { width, height } = getRect();
   React.useEffect(() => {
@@ -970,12 +969,6 @@ const AvlMap = (props) => {
               loadingLayers={loadingLayers}
             />
           ))}
-        </div>
-        <div className="absolute bottom-0">
-          { loadingLayers.map((layer) => (
-              <LoadingLayer key={layer.id} layer={layer} />
-            ))
-          }
         </div>
       </Sidebar>
       }
@@ -1065,7 +1058,7 @@ const AvlMap = (props) => {
 };
 export { AvlMap };
 
-const useCheckLayerProps = (activeLayers, layerProps) => {
-  const prevLayerProps = React.useRef({});
-  React.useEffect(() => {}, [activeLayers, layerProps]);
-};
+// const useCheckLayerProps = (activeLayers, layerProps) => {
+//   const prevLayerProps = React.useRef({});
+//   React.useEffect(() => {}, [activeLayers, layerProps]);
+// };

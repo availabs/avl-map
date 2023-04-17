@@ -91,7 +91,7 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
         absolute top-0 left-0 z-20 inline-block
         rounded whitespace-nowrap hover-comp
         pointer-events-auto
-        p-1 rounded ${ theme.sidebarBg }
+         ${ theme.sidebarBg }
         grid grid-cols-1 gap-1
       ` }
       style={ {
@@ -118,8 +118,7 @@ export const PinnedHoverComp = ({ children, remove, id, project, lngLat, width }
 }
 
 export const HoverCompContainer = ({ show, children, lngLat, project, ...rest }) => {
-  const theme = useTheme();
-
+  
   const pos = project(lngLat);
 
   return (
@@ -127,7 +126,6 @@ export const HoverCompContainer = ({ show, children, lngLat, project, ...rest })
         absolute top-0 left-0 z-20
         rounded whitespace-nowrap hover-comp
         pointer-events-none
-        p-1 rounded ${ theme.sidebarBg }
         grid grid-cols-1 gap-1
       ` }
       style={ {
