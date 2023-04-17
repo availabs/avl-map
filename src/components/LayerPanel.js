@@ -25,7 +25,7 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
   const filters = React.useMemo(() => {
     return Object.values(layer.filters).map(
       ({ name, type, layerId, active = true, ...rest }, i) => {
-        if (!active) return <span />;
+        if (!active) return null;
         switch (type) {
           default:
             return (
