@@ -376,7 +376,7 @@ const AvlMap = (props) => {
 
   const projectLngLat = React.useCallback(
     (lngLat) => {
-      return state.map.project(lngLat);
+      return state.map.project(!lngLat?.lng || !lngLat?.lat ? {lng: 0, lat: 0} : lngLat);
     },
     [state.map]
   );
@@ -770,6 +770,7 @@ const AvlMap = (props) => {
   }, [state.map, pinHoverComp, hovering]);
 
   const loadingLayers = React.useMemo(() => {
+    console.log('LL?', layers, state)
     return [...layers, ...state.dynamicLayers].filter((layer) =>
       Boolean(state.layersLoading[layer.id])
     );
