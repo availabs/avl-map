@@ -1,6 +1,6 @@
 import React from "react"
 
-import { ScalableLoading, useTheme } from "modules/avl-components/src"
+import { ScalableLoading, useTheme } from "~/modules/avl-components/src"
 
 const LoadingLayer = ({ layer, progress }) => {
 

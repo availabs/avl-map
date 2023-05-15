@@ -1,6 +1,6 @@
 import React from "react";
 
-import get from "lodash.get";
+import get from "lodash/get";
 
 import {
   Select,
@@ -9,7 +9,7 @@ import {
   useSidebarContext,
   DummyLegendTools,
   useLegendReducer,
-} from "modules/avl-components/src";
+} from "~/modules/avl-components/src";
 
 const LayerPanel = ({ layer, layersLoading, ...rest }) => {
   const [open, setOpen] = React.useState(true),

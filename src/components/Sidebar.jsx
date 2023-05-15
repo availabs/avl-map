@@ -1,6 +1,6 @@
 import React from "react"
 
-import { Select, useTheme, CollapsibleSidebar } from "modules/avl-components/src"
+import { Select, useTheme, CollapsibleSidebar } from "~/modules/avl-components/src"
 
 import LayerPanel from "./LayerPanel"
 

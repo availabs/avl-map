@@ -1,10 +1,10 @@
 import mapboxgl from "mapbox-gl"
 
-import { hasValue } from "modules/avl-components/src"
+import { hasValue } from "~/modules/avl-components/src"
 
 import DefaultHoverComp from "./components/DefaultHoverComp"
 
-import get from "lodash.get"
+import get from "lodash/get"
 
 let id = -1;
 const getLayerId = () => `avl-layer-${ ++id }`;

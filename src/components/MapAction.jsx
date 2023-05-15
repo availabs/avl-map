@@ -1,6 +1,6 @@
 import React from "react"
 
-import { useTheme } from "modules/avl-components/src"
+import { useTheme } from "~/modules/avl-components/src"
 
 const MapAction = ({ icon, tooltip, actionFunc,
                       MapActions, layer,

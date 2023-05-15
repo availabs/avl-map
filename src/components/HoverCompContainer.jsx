@@ -1,6 +1,6 @@
 import React from "react"
 
-import { useTheme } from "modules/avl-components/src"
+import { useTheme } from "~/modules/avl-components/src"
 
 import { Icon } from "./LayerPanel"
 
