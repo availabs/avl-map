@@ -22,6 +22,7 @@ const DefaultOptions = {
   isVisible: true,
   toolbar: ["toggle-visibility"],
   legend: null,
+  showLegendControls: true,
   infoBoxes: [],
   props: {},
   state: {},

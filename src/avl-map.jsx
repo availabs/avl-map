@@ -427,7 +427,7 @@ const AvlMap = (props) => {
     (layer, update) => {
       if (!get(layer, "legend", null)) return;
 
-      console.log("update Legend", layer.legend, update);
+      // console.log("update Legend", layer.legend, update);
       layer.legend = {
         ...layer.legend,
         ...update,
@@ -770,7 +770,7 @@ const AvlMap = (props) => {
   }, [state.map, pinHoverComp, hovering]);
 
   const loadingLayers = React.useMemo(() => {
-    console.log('LL?', layers, state)
+    // console.log('LL?', layers, state)
     return [...layers, ...state.dynamicLayers].filter((layer) =>
       Boolean(state.layersLoading[layer.id])
     );

@@ -60,7 +60,7 @@ const LayerPanel = ({ layer, layersLoading, ...rest }) => {
       />
 
       <div style={{ display: open ? "block" : "none" }}>
-        {!layer.legend ? null : <LegendControls layer={layer} {...rest} />}
+        {!layer.legend || !layer.showLegendControls ? null : <LegendControls layer={layer} {...rest} />}
         {filters}
       </div>
     </div>
