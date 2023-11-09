@@ -10,8 +10,8 @@ const MapAction = ({ icon, tooltip, actionFunc,
     <div className={ `${ theme.sidebarBg } p-1 rounded-2xl mb-2` }>
       <div className={ `${ theme.menuBg } p-1 rounded-2xl` }>
         <div className={ `
-            ${ theme.bg } hover:${ theme.accent1 }
-            ${ theme.menuText } ${ theme.menuTextHover }
+            bg-white hover:bg-blue-100
+            text-blue-500 hover:text-blue-700
             w-10 h-10 rounded-2xl cursor-pointer text-lg
             flex items-center justify-center text-black
           ` }
