@@ -155,7 +155,10 @@ class LayerContainer {
       property = get(this, ["onHover", "property"], null),
       filterFunc = get(this, ["onHover", "filterFunc"], null),
       pinnable = get(this, ["onHover", "pinnable"], true),
-      sortOrder = get(this, ["onHover", "sortOrder"], Infinity);
+      sortOrder = get(this, ["onHover", "sortOrder"], Infinity),
+
+      hoverEnter = get(this, ["onHover", "hoverEnter"], null),
+      hoverLeave = get(this, ["onHover", "hoverLeave"], null);
 
     const mousemove = (layerId, { point, features, lngLat }) => {
 
@@ -240,6 +243,10 @@ class LayerContainer {
       });
     };
 
+    const wrapFunc = func => {
+      return ({ point, features, lngLat }) => func(features, lngLat, point);
+    }
+
     this.onHover.layers.forEach(layerId => {
       let callback = mousemove.bind(this, layerId);
       this.callbacks.push({
@@ -249,6 +256,16 @@ class LayerContainer {
       });
       mapboxMap.on("mousemove", layerId, callback);
 
+      if (hoverEnter) {
+        const callback = wrapFunc(hoverEnter.bind(this, layerId));
+        this.callbacks.push({
+          action: "mousemove",
+          callback,
+          layerId
+        });
+        mapboxMap.on("mousemove", layerId, callback);
+      }
+
       callback = mouseleave.bind(this, layerId);
       this.callbacks.push({
         action: "mouseleave",
@@ -256,6 +273,16 @@ class LayerContainer {
         layerId
       });
       mapboxMap.on("mouseleave", layerId, callback);
+
+      if (hoverLeave) {
+        const callback = wrapFunc(hoverLeave.bind(this, layerId));
+        this.callbacks.push({
+          action: "mouseleave",
+          callback,
+          layerId
+        });
+        mapboxMap.on("mouseleave", layerId, callback);
+      }
     }, this);
   }
 
