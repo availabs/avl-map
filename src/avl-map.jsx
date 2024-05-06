@@ -182,6 +182,7 @@ const Reducer = (state, action) => {
         ...payload,
       };
       if (newPinned.HoverComps.length) {
+        payload.marker.addTo(state.map);
         return {
           ...state,
           pinnedHoverComps: [...state.pinnedHoverComps, newPinned],
@@ -748,7 +749,7 @@ const AvlMap = (props) => {
 
   const pinHoverComp = React.useCallback(
     ({ lngLat }) => {
-      const marker = new mapboxgl.Marker().setLngLat(lngLat).addTo(state.map);
+      const marker = new mapboxgl.Marker().setLngLat(lngLat);
       dispatch({
         type: "pin-hover-comp",
         marker,
@@ -782,6 +783,8 @@ const AvlMap = (props) => {
     );
     return { ...state.hoverData, show: Boolean(HoverComps.length), HoverComps };
   }, [state.hoverData]);
+
+console.log("HOVER COMPS:", HoverComps, state.hoverData)
 
   // DETERMINE ACTIVE AND INACTIVE LAYERS
   const inactiveLayers = React.useMemo(() => {

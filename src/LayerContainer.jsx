@@ -256,14 +256,14 @@ class LayerContainer {
       });
       mapboxMap.on("mousemove", layerId, callback);
 
-      if (hoverEnter) {
+      if (typeof hoverEnter === "function") {
         const callback = wrapFunc(hoverEnter.bind(this, layerId));
         this.callbacks.push({
-          action: "mousemove",
+          action: "mouseenter",
           callback,
           layerId
         });
-        mapboxMap.on("mousemove", layerId, callback);
+        mapboxMap.on("mouseenter", layerId, callback);
       }
 
       callback = mouseleave.bind(this, layerId);
@@ -274,7 +274,7 @@ class LayerContainer {
       });
       mapboxMap.on("mouseleave", layerId, callback);
 
-      if (hoverLeave) {
+      if (typeof hoverLeave === "function") {
         const callback = wrapFunc(hoverLeave.bind(this, layerId));
         this.callbacks.push({
           action: "mouseleave",
